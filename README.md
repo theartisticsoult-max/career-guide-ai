@@ -90,21 +90,27 @@ Open http://127.0.0.1:5000 in your browser.
 
 ## ⚙️ Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `SECRET_KEY` | Flask session secret (use a long random value in production) |
-| `PYTHON_VERSION` | Set to `3.11.9` on Render |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SECRET_KEY` | Flask session secret (use a long random value in production) | Required |
+| `PYTHON_VERSION` | Set to `3.11.9` on Render | `3.11.9` |
+| `GROQ_API_KEY` | Groq API Key for conversational AI chatbot (`llama-3.3-70b-versatile`) | Optional (has smart domain fallback) |
+| `GROQ_MODEL` | Groq model identifier | `llama-3.3-70b-versatile` |
 
 ## ☁️ Deploy on Render
 
-1. Push this repo to GitHub.
-2. On [Render](https://render.com) click **New + → Web Service** and connect the repo.
+1. Push this repo to GitHub (`deepikajdev/career-guide-ai`).
+2. On [Render](https://render.com) click **New + → Web Service** and connect the repo (or use Blueprint with `render.yaml`).
 3. Use these settings:
    - **Language:** Python 3
-   - **Build Command:** `pip install -r requirements.txt`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt`
    - **Start Command:** `gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120`
    - **Health Check Path:** `/health`
-4. Add the `SECRET_KEY` and `PYTHON_VERSION` (`3.11.9`) environment variables and deploy.
+4. Configure Environment Variables in the Render dashboard:
+   - `SECRET_KEY` (auto-generated or secret string)
+   - `PYTHON_VERSION`: `3.11.9`
+   - `GROQ_API_KEY`: your Groq API key from [Groq Console](https://console.groq.com/keys)
+   - `GROQ_MODEL`: `llama-3.3-70b-versatile` (optional, defaults to llama-3.3-70b-versatile)
 
 ## 🔮 Future Improvements
 

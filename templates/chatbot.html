@@ -298,19 +298,80 @@ class ModernChatbot {
     }
     
     formatMessage(content) {
+        if (!content) return '';
         let formatted = content;
         
-        // Bold text
-        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Escape HTML
+        formatted = formatted
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         
-        // Bullet points
-        formatted = formatted.replace(/^[•·]\s+(.*)$/gm, '<li>$1</li>');
+        // Code blocks
+        formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.05);padding:8px;border-radius:6px;overflow-x:auto;"><code>$1</code></pre>');
+        formatted = formatted.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.05);padding:2px 4px;border-radius:4px;">$1</code>');
+        
+        // Headers
+        formatted = formatted.replace(/^### (.*$)/gm, '<h4 style="margin: 8px 0 4px; font-size: 1rem; color: var(--primary);">$1</h4>');
+        formatted = formatted.replace(/^## (.*$)/gm, '<h3 style="margin: 10px 0 6px; font-size: 1.1rem; color: var(--primary);">$1</h3>');
+        formatted = formatted.replace(/^# (.*$)/gm, '<h2 style="margin: 12px 0 8px; font-size: 1.25rem; color: var(--primary);">$1</h2>');
+        
+        // Bold and Italic
+        formatted = formatted.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Markdown Table conversion
+        const lines = formatted.split('\n');
+        let inTable = false;
+        let tableHtml = '';
+        let processedLines = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('|') && line.endsWith('|')) {
+                const cells = line.split('|').slice(1, -1).map(c => c.trim());
+                if (cells.every(c => /^:?-+:?$/.test(c))) {
+                    continue;
+                }
+                if (!inTable) {
+                    inTable = true;
+                    tableHtml = '<div style="overflow-x:auto; margin: 8px 0;"><table style="width:100%; border-collapse:collapse; font-size:0.9em;">';
+                    tableHtml += '<thead><tr>' + cells.map(c => `<th style="border:1px solid #ddd; padding:6px 10px; background:rgba(74,111,165,0.08);">${c}</th>`).join('') + '</tr></thead><tbody>';
+                } else {
+                    tableHtml += '<tr>' + cells.map(c => `<td style="border:1px solid #ddd; padding:6px 10px;">${c}</td>`).join('') + '</tr>';
+                }
+            } else {
+                if (inTable) {
+                    inTable = false;
+                    tableHtml += '</tbody></table></div>';
+                    processedLines.push(tableHtml);
+                    tableHtml = '';
+                }
+                processedLines.push(lines[i]);
+            }
+        }
+        if (inTable) {
+            tableHtml += '</tbody></table></div>';
+            processedLines.push(tableHtml);
+        }
+        formatted = processedLines.join('\n');
+        
+        // Bullet points (-, *, •, ·)
+        formatted = formatted.replace(/^[\*\-\•\·]\s+(.*)$/gm, '<li>$1</li>');
+        // Numbered list items
+        formatted = formatted.replace(/^\d+\.\s+(.*)$/gm, '<li>$1</li>');
+        
+        // Wrap consecutive <li> into <ul>
         if (formatted.includes('<li>')) {
-            formatted = '<ul class="message-list">' + formatted + '</ul>';
+            formatted = formatted.replace(/(<li>[\s\S]*?<\/li>(?:\s*\n?\s*))+/g, '<ul class="message-list" style="margin:6px 0; padding-left:20px;">$&</ul>');
         }
         
-        // Line breaks
+        // Line breaks (ignore within tables/lists)
         formatted = formatted.replace(/\n/g, '<br>');
+        formatted = formatted.replace(/<\/ul><br>/g, '</ul>');
+        formatted = formatted.replace(/<\/div><br>/g, '</div>');
+        formatted = formatted.replace(/<\/h[234]><br>/g, (m) => m.replace('<br>', ''));
         
         return formatted;
     }
@@ -374,10 +435,19 @@ class ModernChatbot {
         });
         
         try {
+            // Prepare recent conversation history context for Groq
+            const recentHistory = this.conversationHistory.slice(-10).map(item => ({
+                role: item.role,
+                content: item.content
+            }));
+
             const response = await fetch('/api/chatbot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ 
+                    message: text,
+                    history: recentHistory
+                })
             });
             
             const data = await response.json();

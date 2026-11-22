@@ -10,6 +10,7 @@ import hashlib
 
 from database import Database
 from ai_summary import AISummaryGenerator
+import chatbot_service
 
 load_dotenv()
 
@@ -379,10 +380,14 @@ def from_json_filter(value):
 @app.route('/api/chatbot', methods=['POST'])
 def api_chatbot():
     try:
-        data = request.json
-        message = data.get('message', '').lower().strip()
+        data = request.json or {}
+        message = data.get('message', '').strip()
+        history = data.get('history', [])
         
-        response = get_chatbot_response(message)
+        if not message:
+            return jsonify({'response': "Please enter a question or message."}), 400
+        
+        response = get_chatbot_response(message, history=history)
         
         return jsonify({'response': response})
     except Exception as e:
@@ -685,45 +690,10 @@ def get_similar_careers(career_id, top_n=4):
     
     return similar
 
-def get_chatbot_response(message):
-    """Generate chatbot response"""
+def get_chatbot_response(message, history=None):
+    """Generate chatbot response using Groq API with conversation context and fallback"""
     global career_df
-    
-    if career_df is None:
-        return "I'm having trouble accessing the career data. Please try again later."
-    
-    # Greetings
-    greetings = ['hello', 'hi', 'hey', 'greetings', 'namaste']
-    if any(greet in message for greet in greetings):
-        return "👋 Hello! I'm your AI Career Assistant. I can help you find careers, understand requirements, compare options, and plan your professional journey. What would you like to know?"
-    
-    # Career recommendations
-    if any(word in message for word in ['recommend', 'suggest', 'career for me']):
-        if 'science' in message:
-            careers = career_df[career_df['Preferred_Stream'].str.contains('Science', na=False)].head(5)
-            response = "🔬 Based on your interest in Science, here are some great career options:\n\n"
-            for _, c in careers.iterrows():
-                response += f"• **{c['Career_Name']}** - {c['Category']} (Salary: {c['Entry_Salary_LPA']} LPA)\n"
-            return response
-        elif 'commerce' in message:
-            careers = career_df[career_df['Preferred_Stream'].str.contains('Commerce', na=False)].head(5)
-            response = "💼 Based on your interest in Commerce, here are some great career options:\n\n"
-            for _, c in careers.iterrows():
-                response += f"• **{c['Career_Name']}** - {c['Category']} (Salary: {c['Entry_Salary_LPA']} LPA)\n"
-            return response
-        elif 'arts' in message:
-            careers = career_df[career_df['Preferred_Stream'].str.contains('Arts', na=False)].head(5)
-            response = "🎨 Based on your interest in Arts, here are some great career options:\n\n"
-            for _, c in careers.iterrows():
-                response += f"• **{c['Career_Name']}** - {c['Category']} (Salary: {c['Entry_Salary_LPA']} LPA)\n"
-            return response
-    
-    # Search for specific career
-    for _, career in career_df.iterrows():
-        if career['Career_Name'].lower() in message:
-            return get_career_details_text(career)
-    
-    return get_default_response()
+    return chatbot_service.get_chatbot_response(message, history=history, career_df=career_df)
 
 
 # Add to app.py
