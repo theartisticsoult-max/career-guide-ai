@@ -48,6 +48,36 @@ def parse_explanation(raw):
     return None
 
 
+def parse_mentor_answer(raw, max_length=6000):
+    """Return a validated JSON mentor answer, or None so callers fall back.
+
+    Unlike the legacy chat parser, plain text is not accepted: the mentor
+    contract requires a single JSON object with a non-empty answer string.
+    """
+    if not raw or not isinstance(raw, str):
+        return None
+
+    text = raw.strip()
+    if text.startswith('```'):
+        text = text.strip('`').strip()
+        if text.lower().startswith('json'):
+            text = text[4:].strip()
+
+    try:
+        payload = json.loads(text)
+    except (ValueError, TypeError):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    for key in ('answer', 'response', 'explanation'):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip() and len(value.strip()) <= max_length:
+            return value.strip()
+    return None
+
+
 def parse_explanation_map(raw, keys, max_length=800):
     """Return validated ``{key: explanation}`` JSON, or None.
 

@@ -1,7 +1,7 @@
 <!-- templates/chatbot.html -->
 {% extends "base.html" %}
 
-{% block title %}AI Career Assistant - CareerGuide AI{% endblock %}
+{% block title %}AI Career Mentor - CareerGuide AI{% endblock %}
 
 {% block content %}
 <div class="chatbot-page">
@@ -33,17 +33,17 @@
                 <div class="sidebar-section">
                     <h4>Quick Tools</h4>
                     <div class="tool-links">
-                        <a href="/psychometric-test" class="tool-link">
-                            <i data-feather="brain"></i>
-                            Psychometric Test
+                        <a href="{{ url_for('main.discovery') }}" class="tool-link">
+                            <i data-feather="compass"></i>
+                            Career Discovery
                         </a>
-                        <a href="/quiz" class="tool-link">
+                        <a href="{{ url_for('main.recommendations') }}" class="tool-link">
                             <i data-feather="help-circle"></i>
-                            Career Quiz
+                            My Recommendations
                         </a>
-                        <a href="/compare" class="tool-link">
-                            <i data-feather="git-compare"></i>
-                            Compare Careers
+                        <a href="{{ url_for('main.roadmap') }}" class="tool-link">
+                            <i data-feather="trending-up"></i>
+                            My Roadmap
                         </a>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
                         <i data-feather="menu"></i>
                     </button>
                     <div class="header-info">
-                        <h1>AI Career Assistant</h1>
+                        <h1>AI Career Mentor</h1>
                         <div class="status-badge">
                             <span class="status-dot"></span>
                             <span>Ready to help</span>
@@ -79,52 +79,52 @@
                     <div class="welcome-icon">
                         <i data-feather="compass"></i>
                     </div>
-                    <h2>Hello! I'm your AI Career Assistant</h2>
-                    <p>I can help you discover careers, understand requirements, compare options, and plan your professional journey.</p>
+                    <h2>Hello! I'm your AI Career Mentor</h2>
+                    <p>I use your profile, discovery answers, recommendations and roadmap to give practical next steps.</p>
                     
                     <div class="feature-cards">
                         <div class="feature-card">
                             <i data-feather="search"></i>
                             <h4>Career Discovery</h4>
-                            <p>Find careers matching your interests</p>
+                            <p>Compare careers worth exploring</p>
                         </div>
                         <div class="feature-card">
                             <i data-feather="book-open"></i>
-                            <h4>Education Paths</h4>
-                            <p>Learn about degrees and certifications</p>
+                            <h4>Requirements</h4>
+                            <p>Understand education and entry routes</p>
                         </div>
                         <div class="feature-card">
                             <i data-feather="trending-up"></i>
-                            <h4>Salary Insights</h4>
-                            <p>Understand earning potential</p>
+                            <h4>Roadmap Help</h4>
+                            <p>Know what to work on next</p>
                         </div>
                         <div class="feature-card">
                             <i data-feather="briefcase"></i>
-                            <h4>Top Recruiters</h4>
-                            <p>Know who's hiring</p>
+                            <h4>Applications</h4>
+                            <p>Prepare your resume and interviews</p>
                         </div>
                     </div>
                     
                     <div class="suggested-prompts">
                         <h4>Try asking me:</h4>
                         <div class="prompts-grid">
-                            <button class="prompt-btn" data-prompt="What are the highest paying careers in India?">
-                                💰 Highest paying careers
+                            <button class="prompt-btn" data-prompt="Help me choose between healthcare and design careers">
+                                ⚖️ Compare two paths
                             </button>
-                            <button class="prompt-btn" data-prompt="Tell me about becoming a data scientist">
-                                📊 Become a data scientist
+                            <button class="prompt-btn" data-prompt="What should I learn next for my roadmap?">
+                                📈 Next roadmap step
                             </button>
-                            <button class="prompt-btn" data-prompt="What careers are good for science students?">
-                                🔬 Science student careers
+                            <button class="prompt-btn" data-prompt="What qualifications do I need for this career?">
+                                🎓 Qualifications
                             </button>
-                            <button class="prompt-btn" data-prompt="How to prepare for UPSC exam?">
-                                📖 UPSC preparation
+                            <button class="prompt-btn" data-prompt="What careers suit a commerce student?">
+                                📚 Commerce careers
                             </button>
-                            <button class="prompt-btn" data-prompt="Careers in healthcare industry">
-                                🏥 Healthcare careers
+                            <button class="prompt-btn" data-prompt="How can I prepare my resume and interview?">
+                                📝 Resume and interview
                             </button>
-                            <button class="prompt-btn" data-prompt="What skills are most in demand?">
-                                🔥 In-demand skills
+                            <button class="prompt-btn" data-prompt="What should I check before applying in my state?">
+                                📍 Local requirements
                             </button>
                         </div>
                     </div>
@@ -138,7 +138,7 @@
                 <div class="input-container">
                     <textarea 
                         id="chatInput" 
-                        placeholder="Ask me anything about careers, education, salaries, or skills..."
+                        placeholder="Ask about careers, requirements or your roadmap..."
                         rows="1"
                     ></textarea>
                     <button class="send-button" id="sendBtn">

@@ -1,4 +1,5 @@
 """Tests for the DISCOVER -> EXPLORE -> CHOOSE -> GROW entry points."""
+import json
 import re
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ from app import app, db
 from app.services import (
     career_data,
     chat_service,
+    chatbot_service,
     discovery_service,
     profile_service,
     recommendation_service,
@@ -249,6 +251,47 @@ class NewJourneysTestCase(unittest.TestCase):
         self.assertIn('Change career', html)
         self.assertIn('Resume with', html)
         self.assertIn('Learning Resources', html)
+
+    def test_mentor_uses_saved_context_and_validates_llm_json(self):
+        user = self._new_user('mentor_full_context_user')
+        self.client.post('/discovery', data=self._discovery_form())
+        with app.app_context():
+            profile_service.save_profile(
+                user['id'], 'college', 'Arts', 'design and community work',
+                city='Pune', country='India', region='Maharashtra',
+            )
+            items = recommendation_service.get_recommendations(user['id'])['items']
+            recommendation_service.choose_career_direct(user['id'], items[0]['career_id'])
+            roadmap = roadmap_service.get_roadmap(user['id'])
+            roadmap_service.toggle_item(user['id'], roadmap['items'][0]['id'])
+            context = chat_service.build_context(user['id'])
+
+        for expected in (
+            'Learning goals stated', 'Discovery answers', 'Careers to explore',
+            'Chosen career', 'Completed milestones', 'Next milestone',
+            'Country: India', 'State/region: Maharashtra',
+        ):
+            self.assertIn(expected, context)
+        self.assertNotIn('% match', context)
+
+        with app.app_context(), patch(
+            'app.services.chatbot_service.call_groq_completion',
+            return_value='unstructured plain text',
+        ):
+            fallback = chat_service.respond(user['id'], 'What should I do next?')
+        self.assertIn('**What I know**', fallback)
+        self.assertIn('**Practical next steps**', fallback)
+        self.assertIn('**Clarifying question**', fallback)
+        self.assertNotIn('unstructured plain text', fallback)
+        self.assertNotIn('LPA', fallback)
+
+        with app.app_context(), patch(
+            'app.services.chatbot_service.call_groq_completion',
+            return_value=json.dumps({'answer': '**Valid** mentor answer'}),
+        ):
+            valid = chat_service.respond(user['id'], 'What next?')
+        self.assertEqual(valid, '**Valid** mentor answer')
+        self.assertNotIn('salary expectations', chatbot_service.SYSTEM_PROMPT.lower())
 
 
 if __name__ == '__main__':
