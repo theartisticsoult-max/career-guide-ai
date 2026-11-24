@@ -293,6 +293,56 @@ class NewJourneysTestCase(unittest.TestCase):
         self.assertEqual(valid, '**Valid** mentor answer')
         self.assertNotIn('salary expectations', chatbot_service.SYSTEM_PROMPT.lower())
 
+    def test_discovery_handles_school_college_and_changer_backgrounds(self):
+        for answer, expected_stage in (
+            ('class10', 'class10'), ('class12', 'class12'),
+            ('college', 'college'), ('working', 'college'),
+        ):
+            form = MultiDict(self._discovery_form().items(multi=True))
+            form.setlist('d1', [answer])
+            answers, errors = discovery_service.normalise_answers(form)
+            self.assertEqual(errors, [])
+            payload = discovery_service.build_score_payload(answers)
+            self.assertEqual(payload['profile']['stage'], expected_stage)
+
+    def test_catalogue_covers_many_industries_and_non_technical_paths(self):
+        with app.app_context():
+            careers = career_data.get_all_careers()
+            categories = {career['Category'] for career in careers}
+            self.assertGreaterEqual(len(categories), 15)
+            for industry in ('Healthcare', 'Arts', 'Law', 'Education',
+                             'Skilled Trades', 'Government'):
+                self.assertIn(industry, categories)
+            self.assertGreater(
+                sum(1 for career in careers
+                    if career.get('non_tech_eligible') == 'yes'),
+                100,
+            )
+
+    def test_new_screens_keep_responsive_layout_hooks(self):
+        base = (ROOT / 'templates' / 'base.html').read_text(encoding='utf-8')
+        self.assertIn('name="viewport"', base)
+        self.assertIn('@media (max-width: 768px)', base)
+        for name in ('dashboard.html', 'discover.html', 'discovery.html',
+                     'chatbot.html'):
+            template = (ROOT / 'templates' / name).read_text(encoding='utf-8')
+            self.assertIn('@media', template)
+        css = (ROOT / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+        self.assertIn('.recommendations-grid', css)
+        self.assertIn('@media (max-width: 768px)', css)
+        self.assertIn('grid-template-columns: 1fr', css)
+
+    def test_production_config_keeps_migration_and_postgres_driver(self):
+        requirements = (ROOT / 'requirements.txt').read_text(encoding='utf-8').lower()
+        self.assertIn('psycopg', requirements)
+        render = (ROOT / 'render.yaml').read_text(encoding='utf-8')
+        self.assertIn('flask --app app db upgrade', render)
+        self.assertTrue(any(
+            (ROOT / 'migrations' / 'versions').glob(
+                '*profile_country_region.py'
+            )
+        ))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,9 +1,10 @@
 # 🎯 Career Guide AI
 
-An AI-assisted career guidance web application for Indian students. A single
-combined assessment produces a code-ranked career shortlist, a personal roadmap
-with progress tracking, and a chatbot that remembers the conversation and uses
-the student's saved profile for context.
+An AI-assisted career guidance web application for Indian students and career
+changers. Users can either choose a career directly or complete one 12-question
+discovery assessment. Both paths lead to a code-ranked shortlist, a personal
+roadmap with saved progress, and an AI Career Mentor that uses the user's saved
+context.
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-2.3-000000?logo=flask&logoColor=white)
@@ -32,20 +33,23 @@ the student's saved profile for context.
 
 ## ✨ Features
 
-- 🔍 **Career Explorer** – browse 300 careers by category, search by name or skill, and compare roles
-- 📝 **Combined Assessment** – interests, aptitude and preferences in one resumable three-part flow
-- 🏆 **Code-Ranked Recommendations** – deterministic scoring from assessment results, profile and preferences
-- 🧭 **Personal Roadmap** – generated steps with estimated time and saved progress
-- 🤖 **Context-Aware Chatbot** – remembers logged-in conversations and uses profile, chosen career and roadmap context
-- 👤 **User Accounts & Dashboard** – register, log in, complete a one-time profile and review results
+- 🧭 **Two Entry Paths** – "I Know What I Want" for direct browsing and "Help Me Discover My Career" for guided exploration
+- 🔍 **Career Explorer** – search 300 careers across 20 industries, compare roles and choose without an assessment
+- 📝 **Career Discovery** – one 12-question, roughly three-minute flow with no right or wrong answers
+- 🏆 **Code-Ranked Recommendations** – deterministic ranking from answers, profile, education, skills and location, with top three shown first
+- 🗺️ **Personal Roadmap** – qualifications, skills, resources, projects, internships, resume preparation and saved progress
+- 🤖 **AI Career Mentor** – practical, structured answers using saved profile, discovery answers, recommendations and roadmap milestones
+- 👤 **User Accounts & Dashboard** – register, log in, complete a one-time profile and resume a journey at any point
 - 🛡️ **Admin Dashboard** – user statistics, user management and action logs
 
 Ranking and matching are always done in Python. The language model only writes
 explanations and roadmaps as validated JSON; if it is unavailable or returns
 invalid data, the application uses a deterministic non-LLM fallback.
 
-The old `/quiz`, `/psychometric-test`, `/iq-test` and result pages now redirect
-to the combined assessment.
+The old `/quiz`, `/psychometric-test`, `/iq-test` and result pages still redirect
+to the legacy combined assessment for compatibility, but they are no longer in
+the primary navigation or shown as a required step in the new journeys. See
+[UPGRADE_NOTES.md](UPGRADE_NOTES.md) for the full change summary.
 
 ## 🛠️ Tech Stack
 
@@ -70,6 +74,7 @@ career-guide-ai/
 │   └── services/            # Assessment, scoring, ranking, roadmap, chat and data logic
 ├── data/
 │   ├── career.csv           # Enriched 300-career dataset
+│   ├── discovery_questions.py # 12-question discovery bank
 │   ├── questions.py         # Legacy question banks
 │   └── assessment_questions.py
 ├── migrations/              # Flask-Migrate revisions
