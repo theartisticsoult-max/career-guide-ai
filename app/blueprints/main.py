@@ -2,20 +2,12 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.blueprints.auth import login_required
-from app.services import career_data, profile_service, user_service
-from data.questions import (
-    PERSONALITY_QUESTIONS,
-    INTEREST_QUESTIONS,
+from app.services import assessment_service, career_data, profile_service, user_service
+from data.assessment_questions import (
     APTITUDE_QUESTIONS,
-    WORK_STYLE_QUESTIONS,
-    VALUES_QUESTIONS,
-    IQ_LOGICAL_QUESTIONS,
-    IQ_NUMERICAL_QUESTIONS,
-    IQ_VERBAL_QUESTIONS,
-    IQ_SPATIAL_QUESTIONS,
-    IQ_MEMORY_QUESTIONS,
+    INTEREST_STATEMENTS,
+    PREFERENCE_QUESTIONS,
 )
-
 main_bp = Blueprint('main', __name__)
 
 
@@ -60,29 +52,89 @@ def resources():
     return render_template('resources.html')
 
 
+@main_bp.route('/assessment', methods=['GET', 'POST'])
+@login_required
+def assessment():
+    """Combined three-part assessment with resume support."""
+    user_id = session['user_id']
+    state = assessment_service.get_state(user_id)
+    if state['status'] == 'completed':
+        return redirect(url_for('main.dashboard'))
+
+    try:
+        part = int(request.args.get('part', state['current_part']))
+    except (TypeError, ValueError):
+        part = state['current_part']
+    part = max(1, min(3, part))
+
+    if request.method == 'POST':
+        try:
+            submitted_part = int(request.form.get('part', part))
+        except (TypeError, ValueError):
+            submitted_part = part
+        submitted_part = max(1, min(3, submitted_part))
+
+        answers = {}
+        if submitted_part == 1:
+            for question in INTEREST_STATEMENTS:
+                value = request.form.get(question['id'])
+                if value and value.isdigit() and 1 <= int(value) <= 5:
+                    answers[question['id']] = int(value)
+        elif submitted_part == 2:
+            for question in APTITUDE_QUESTIONS:
+                value = request.form.get(question['id'])
+                if value and value.isdigit() and int(value) < len(question['options']):
+                    answers[question['id']] = int(value)
+        else:
+            allowed = {
+                question['id']: [option['value'] for option in question['options']]
+                for question in PREFERENCE_QUESTIONS
+            }
+            for key, values in allowed.items():
+                value = request.form.get(key)
+                if value in values:
+                    answers[key] = value
+
+        if not answers:
+            flash('Please answer at least one question.', 'error')
+            return redirect(url_for('main.assessment', part=submitted_part))
+
+        assessment_service.save_part(user_id, state['assessment_id'], submitted_part, answers)
+        if submitted_part == 3:
+            combined = assessment_service.get_answers(user_id, state['assessment_id'])
+            assessment_service.complete(user_id, state['assessment_id'], combined)
+            flash('Assessment complete!', 'success')
+            return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.assessment', part=submitted_part + 1))
+
+    return render_template(
+        'assessment.html',
+        part=part,
+        questions=assessment_service.questions_for_part(part),
+        saved=assessment_service.get_answers(user_id, state['assessment_id']),
+        progress=int((part - 1) / 3 * 100),
+    )
+
+
 @main_bp.route('/quiz')
 @login_required
 def quiz():
-    """Career assessment quiz - Login required"""
-    return render_template('quiz.html')
+    """Legacy quiz now enters the combined assessment."""
+    return redirect(url_for('main.assessment'))
 
 
 @main_bp.route('/psychometric-test')
 @login_required
 def psychometric_test():
-    """Psychometric assessment test page - Login required"""
-    return render_template('psychometric_test.html',
-                           personality_questions=PERSONALITY_QUESTIONS,
-                           interest_questions=INTEREST_QUESTIONS,
-                           aptitude_questions=APTITUDE_QUESTIONS,
-                           work_style_questions=WORK_STYLE_QUESTIONS,
-                           values_questions=VALUES_QUESTIONS)
+    """Legacy psychometric test now enters the combined assessment."""
+    return redirect(url_for('main.assessment'))
 
 
 @main_bp.route('/results')
 @login_required
 def results():
-    return render_template('results.html')
+    """Legacy results page now enters the combined assessment."""
+    return redirect(url_for('main.assessment'))
 
 
 @main_bp.route('/career/<career_id>')
@@ -117,8 +169,8 @@ def compare():
 @main_bp.route('/psychometric-results')
 @login_required
 def psychometric_results():
-    """Display psychometric assessment results - Login required"""
-    return render_template('psychometric_results.html')
+    """Legacy results now enter the combined assessment."""
+    return redirect(url_for('main.assessment'))
 
 
 @main_bp.route('/dashboard')
@@ -157,20 +209,15 @@ def profile():
 @main_bp.route('/iq-test')
 @login_required
 def iq_test():
-    """IQ Test page"""
-    return render_template('iq_test.html',
-                           logical_questions=IQ_LOGICAL_QUESTIONS,
-                           numerical_questions=IQ_NUMERICAL_QUESTIONS,
-                           verbal_questions=IQ_VERBAL_QUESTIONS,
-                           spatial_questions=IQ_SPATIAL_QUESTIONS,
-                           memory_questions=IQ_MEMORY_QUESTIONS)
+    """Legacy IQ test now enters the combined assessment."""
+    return redirect(url_for('main.assessment'))
 
 
 @main_bp.route('/iq-test-results')
 @login_required
 def iq_test_results():
-    """IQ Test results page"""
-    return render_template('iq_test_results.html')
+    """Legacy results now enter the combined assessment."""
+    return redirect(url_for('main.assessment'))
 
 
 @main_bp.route('/health')

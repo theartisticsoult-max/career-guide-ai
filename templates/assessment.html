@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment - CareerGuide AI{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="container">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <i data-feather="bar-chart-2"></i>
+                    <h2>Your Career Assessment</h2>
+                    <p>Part {{ part }} of 3</p>
+                </div>
+
+                <div class="quiz-progress">
+                    <div class="progress-bar" style="width: {{ progress }}%"></div>
+                </div>
+
+                {% if part == 2 %}
+                <p class="assessment-note">Aptitude - this is guidance, not a clinical test.</p>
+                {% endif %}
+
+                <form method="POST" class="login-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="part" value="{{ part }}">
+
+                    {% if part == 1 %}
+                        {% for question in questions %}
+                        <div class="form-group">
+                            <label>{{ loop.index }}. {{ question.text }}</label>
+                            <div class="radio-row">
+                                {% for value in range(1, 6) %}
+                                <label class="radio-label">
+                                    <input type="radio" name="{{ question.id }}" value="{{ value }}"
+                                           {% if saved.get(question.id) == value %}checked{% endif %} required>
+                                    {{ value }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% elif part == 2 %}
+                        {% for question in questions %}
+                        <div class="form-group">
+                            <label>{{ loop.index }}. {{ question.text }}</label>
+                            {% for option in question.options %}
+                            <label class="radio-label">
+                                <input type="radio" name="{{ question.id }}" value="{{ loop.index0 }}"
+                                       {% if saved.get(question.id) == loop.index0 %}checked{% endif %} required>
+                                {{ option }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for question in questions %}
+                        <div class="form-group">
+                            <label for="{{ question.id }}">{{ question.text }}</label>
+                            <select id="{{ question.id }}" name="{{ question.id }}" class="career-select" required>
+                                <option value="">Select an option...</option>
+                                {% for option in question.options %}
+                                <option value="{{ option.value }}"
+                                        {% if saved.get(question.id) == option.value %}selected{% endif %}>{{ option.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        {{ 'Finish Assessment' if part == 3 else 'Save and Continue' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

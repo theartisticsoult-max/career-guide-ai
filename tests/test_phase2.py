@@ -61,7 +61,7 @@ class TestEveryPageRenders(Phase2TestCase):
             session['is_admin'] = 0
         for path in user_pages:
             with self.subTest(role='user', path=path):
-                response = self.client.get(path)
+                response = self.client.get(path, follow_redirects=True)
                 self.assertEqual(response.status_code, 200, path)
 
         with self.client.session_transaction() as session:
