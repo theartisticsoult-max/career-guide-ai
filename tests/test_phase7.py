@@ -110,7 +110,7 @@ class TestRecommendationsFlow(Phase7TestCase):
         self._new_user('noassessuser')
         response = self.client.get('/recommendations')
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/assessment', response.location)
+        self.assertIn('/discovery', response.location)
 
     def test_generate_persist_and_render_recommendations(self):
         user = self._new_user('recflowuser')

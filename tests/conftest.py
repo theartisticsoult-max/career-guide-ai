@@ -6,6 +6,8 @@ import tempfile
 import pytest
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key')
+# Keep tests deterministic: no live provider calls by default.
+os.environ['GROQ_API_KEY'] = ''
 _TEMP_DIR = tempfile.mkdtemp(prefix='career-guide-tests-')
 os.environ['DATABASE_PATH'] = os.path.join(_TEMP_DIR, 'career_guide.db')
 

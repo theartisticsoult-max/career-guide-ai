@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Career Discovery - CareerGuide AI{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="container">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <i data-feather="compass"></i>
+                    <h2>Career Discovery</h2>
+                    <p>12 questions · about 3 minutes · for guidance only</p>
+                </div>
+
+                <div class="quiz-progress">
+                    <div class="progress-bar" style="width: {{ progress }}%"></div>
+                </div>
+
+                <p class="assessment-note">This is not an IQ test or a personality diagnosis. Answer honestly — there are no right answers.</p>
+
+                <form method="POST" class="login-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    {% for question in questions %}
+                    <div class="form-group">
+                        <label>{{ loop.index }}. {{ question.text }}</label>
+                        <small class="question-help">{{ question.help }}</small>
+                        {% if question.type == 'multi' %}
+                            {% for option in question.options %}
+                            <label class="radio-label">
+                                <input type="checkbox" name="{{ question.id }}" value="{{ option.value }}"
+                                       {% if option.value in saved.get(question.id, []) %}checked{% endif %}>
+                                {{ option.label }}
+                            </label>
+                            {% endfor %}
+                        {% else %}
+                            <div class="radio-row">
+                                {% for option in question.options %}
+                                <label class="radio-label">
+                                    <input type="radio" name="{{ question.id }}" value="{{ option.value }}"
+                                           {% if saved.get(question.id) == option.value %}checked{% endif %} required>
+                                    {{ option.label }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-primary btn-block">Show My Career Matches</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-page {
+    padding: 120px 0 80px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg, #F9F7F5) 0%, #f0f0f0 100%);
+}
+
+.login-container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.login-card {
+    background: var(--surface, white);
+    border-radius: 28px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-header i {
+    width: 56px;
+    height: 56px;
+    color: var(--primary, #4A6FA5);
+    margin-bottom: 16px;
+}
+
+.login-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 8px;
+    color: var(--text, #2D3E50);
+}
+
+.login-header p {
+    color: var(--text-light, #6B7280);
+}
+
+.quiz-progress {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 40px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary, #4A6FA5);
+    border-radius: 40px;
+    transition: width 0.3s;
+}
+
+.assessment-note, .question-help {
+    color: var(--text-light, #6B7280);
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--text, #2D3E50);
+}
+
+.radio-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.radio-label {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    font-weight: 400 !important;
+    font-size: 0.875rem !important;
+    cursor: pointer;
+}
+
+.radio-label input {
+    accent-color: var(--primary, #4A6FA5);
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+    .login-card {
+        padding: 24px;
+    }
+    .radio-row {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

@@ -1,10 +1,17 @@
 """Tests for the DISCOVER -> EXPLORE -> CHOOSE -> GROW entry points."""
+import re
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from werkzeug.datastructures import MultiDict
+
 from app import app, db
-from app.services import profile_service, recommendation_service
+from app.services import (
+    discovery_service,
+    profile_service,
+    recommendation_service,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -110,6 +117,67 @@ class NewJourneysTestCase(unittest.TestCase):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 302)
             self.assertIn('/assessment', response.location)
+
+    def _discovery_form(self):
+        return MultiDict([
+            ('d1', 'working'),
+            ('d2', 'Arts'),
+            ('d3', 'A'),
+            ('d3', 'S'),
+            ('d4', 'english'),
+            ('d5', 'words'),
+            ('d6', 'mixed'),
+            ('d7', 'team'),
+            ('d8', 'stable'),
+            ('d9', '3-5'),
+            ('d10', 'low'),
+            ('d11', 'town'),
+            ('d12', 'yes'),
+        ])
+
+    def test_discovery_page_has_twelve_questions_without_scores(self):
+        self._new_user('discovery_page_user')
+        response = self.client.get('/discovery')
+        self.assertEqual(response.status_code, 200)
+        html = response.data.decode('utf-8', 'replace')
+        self.assertIn('12 questions', html)
+        self.assertIn('not an IQ test', html)
+        self.assertEqual(len(re.findall(r'<label>\d+\.', html)), 12)
+        self.assertIn('name="d1"', html)
+        self.assertIn('name="d12"', html)
+        self.assertNotIn("'riasec'", html)
+
+    def test_discovery_completion_feeds_recommendations(self):
+        user = self._new_user('discovery_flow_user')
+        response = self.client.post('/discovery', data=self._discovery_form())
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/recommendations', response.location)
+
+        with app.app_context():
+            state = discovery_service.get_state(user['id'])
+            self.assertEqual(state['status'], 'completed')
+            self.assertEqual(len(state['saved']), 12)
+            profile = profile_service.get_profile(user['id'])
+            self.assertEqual(profile['stage'], 'college')
+            self.assertEqual(profile['stream'], 'Arts')
+            result = recommendation_service.get_recommendations(user['id'])
+            self.assertFalse(result['needs_assessment'])
+            self.assertEqual(len(result['items']), 10)
+
+        html = self.client.get('/recommendations').data.decode('utf-8', 'replace')
+        self.assertIn('Your Career Matches', html)
+        self.assertNotIn('% match', html)
+
+    def test_discovery_rejects_incomplete_answers(self):
+        user = self._new_user('discovery_invalid_user')
+        form = self._discovery_form()
+        form.pop('d9')
+        response = self.client.post('/discovery', data=form)
+        self.assertEqual(response.status_code, 302)
+        with app.app_context():
+            state = discovery_service.get_state(user['id'])
+            self.assertEqual(state['status'], 'in_progress')
+            self.assertEqual(state['saved'], {})
 
 
 if __name__ == '__main__':

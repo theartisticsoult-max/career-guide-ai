@@ -27,7 +27,7 @@
                 <h2><i data-feather="compass"></i> Help Me Discover My Career</h2>
                 <p>Answer 12 short questions to get career suggestions based on your interests and education.</p>
                 {% if session.user_id %}
-                    <a href="{{ url_for('main.assessment') }}" class="btn btn-primary">Start Career Discovery</a>
+                    <a href="{{ url_for('main.discovery') }}" class="btn btn-primary">Start Career Discovery</a>
                 {% else %}
                     <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log in to Start</a>
                 {% endif %}

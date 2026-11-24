@@ -5,6 +5,7 @@ from app.blueprints.auth import login_required
 from app.services import (
     assessment_service,
     career_data,
+    discovery_service,
     profile_service,
     recommendation_service,
     roadmap_service,
@@ -138,14 +139,49 @@ def assessment():
     )
 
 
+@main_bp.route('/discovery', methods=['GET', 'POST'])
+@login_required
+def discovery():
+    """One 12-question discovery assessment (primary Path B)."""
+    user_id = session['user_id']
+    state = discovery_service.get_state(user_id)
+    if state['status'] == 'completed':
+        return redirect(url_for('main.recommendations'))
+    if state['assessment_id'] is None:
+        discovery_service.get_or_create(user_id)
+        state = discovery_service.get_state(user_id)
+
+    if request.method == 'POST':
+        saved = discovery_service.save_answers(
+            user_id, state['assessment_id'], request.form
+        )
+        if not saved['success']:
+            for error in saved['errors']:
+                flash(error, 'error')
+            return redirect(url_for('main.discovery'))
+        completed = discovery_service.complete(user_id, state['assessment_id'])
+        if not completed['success']:
+            flash(completed['error'], 'error')
+            return redirect(url_for('main.discovery'))
+        flash('Discovery complete! Here are careers worth exploring.', 'success')
+        return redirect(url_for('main.recommendations'))
+
+    return render_template(
+        'discovery.html',
+        questions=discovery_service.questions(),
+        saved=state['saved'],
+        progress=int(len(state['saved']) / 12 * 100),
+    )
+
+
 @main_bp.route('/recommendations')
 @login_required
 def recommendations():
     """Show code-ranked careers from the user's latest assessment."""
     result = recommendation_service.get_recommendations(session['user_id'])
     if result['needs_assessment']:
-        flash('Complete the assessment first to see your career matches.', 'error')
-        return redirect(url_for('main.assessment'))
+        flash('Complete the career discovery first to see your career matches.', 'error')
+        return redirect(url_for('main.discovery'))
     return render_template(
         'recommendations.html',
         recommendations=result['items'],

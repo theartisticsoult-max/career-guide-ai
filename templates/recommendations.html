@@ -23,9 +23,7 @@
             <div class="career-card recommendation-card">
                 <div class="career-header">
                     <h3>#{{ rec.rank }} {{ rec.Career_Name }}</h3>
-                    <span class="match-badge {% if rec.score >= 80 %}high-match{% elif rec.score >= 60 %}medium-match{% else %}low-match{% endif %}">
-                        {{ rec.score|round|int }}% match
-                    </span>
+                    <span class="match-badge">Explore #{{ rec.rank }}</span>
                 </div>
                 <p class="career-category">{{ rec.Category }}</p>
                 <p>{{ rec.why_fits }}</p>
