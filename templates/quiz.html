@@ -58,6 +58,7 @@
 
         <!-- Quiz Form -->
         <form id="quizForm" class="quiz-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <!-- Question 1: Education Level -->
             <div class="quiz-question" id="q1">
                 <div class="question-header">

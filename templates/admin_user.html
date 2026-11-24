@@ -128,7 +128,7 @@
                             <div class="summary-content">
                                 <h3>📋 AI Generated Summary</h3>
                                 <div class="summary-text">
-                                    {{ result.ai_summary|safe }}
+                                    {{ result.ai_summary }}
                                 </div>
                             </div>
                         {% else %}
@@ -242,7 +242,7 @@
                             <div class="summary-content">
                                 <h3>📋 AI Generated Summary</h3>
                                 <div class="summary-text">
-                                    {{ result.ai_summary|safe }}
+                                    {{ result.ai_summary }}
                                 </div>
                             </div>
                         {% endif %}
@@ -301,7 +301,7 @@
                                         <span>📚 {{ rec.Min_Education }}</span>
                                         <span>📈 {{ rec.Job_Outlook }}</span>
                                     </div>
-                                    <a href="/career/{{ rec.Career_ID }}" target="_blank" class="btn-small">View Career →</a>
+                                    <a href="/career/{{ rec.Career_ID }}" target="_blank" rel="noopener noreferrer" class="btn-small">View Career →</a>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -333,6 +333,7 @@
         </div>
         <div class="modal-footer">
             <form action="/admin/user/{{ user.id }}/delete" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
                 <button type="submit" class="btn-danger">Yes, Delete User</button>
             </form>

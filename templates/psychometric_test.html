@@ -63,6 +63,7 @@
 
         <!-- Test Form -->
         <form id="testForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <!-- Section 1: Personality - 15 Questions -->
             <div class="test-section" id="section1">
                 <div class="section-header">

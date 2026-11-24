@@ -53,17 +53,25 @@ An AI-powered career guidance web application that helps students and graduates 
 
 ```
 career-guide-ai/
-├── app.py              # Flask app, routes and recommendation logic
-├── ai_summary.py       # Report/summary generation for tests
-├── database.py         # SQLite models and queries
-├── wsgi.py             # Gunicorn entry point + /health endpoint
-├── career.csv          # Career dataset
+├── app/
+│   ├── __init__.py     # App setup, blueprint registration, template filters
+│   ├── models.py       # SQLite database and shared db instance
+│   ├── blueprints/     # auth, main, api and admin routes (validation only)
+│   └── services/       # Ranking, reports, chatbot and data access logic
+├── data/
+│   ├── career.csv      # Career dataset
+│   └── questions.py    # Psychometric and IQ question banks
+├── wsgi.py             # Gunicorn entry point
 ├── requirements.txt    # Python dependencies
 ├── render.yaml         # Render deployment config
 ├── templates/          # HTML templates
 ├── static/             # CSS, JS, images
+├── tests/              # Test suite
 └── Screenshots/        # README screenshots
 ```
+
+Routes validate input and call services; ranking is done in Python. The LLM
+only writes explanations/roadmaps as validated JSON, with a non-LLM fallback.
 
 ## 🚀 Run Locally
 

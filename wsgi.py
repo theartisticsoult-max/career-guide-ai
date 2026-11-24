@@ -18,9 +18,7 @@ if __name__ != "__main__":
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
-# Health check endpoint
-@app.route('/health')
-def health_check():
-    return {'status': 'healthy', 'message': 'Career Guide AI is running'}
+# Health check endpoint lives in app/blueprints/main.py so it is available
+# both under Gunicorn and when running the app directly.
 
-# The application object is named 'application' for Gunicorn
+# The application object is named 'app' for Gunicorn

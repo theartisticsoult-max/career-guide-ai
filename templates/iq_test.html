@@ -93,6 +93,7 @@
         </div>
 
         <form id="iqTestForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <!-- Section 1: Logical Reasoning (8 Questions) -->
             <div class="test-section active" id="section1">
                 <div class="section-header">

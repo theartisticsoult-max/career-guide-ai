@@ -215,7 +215,7 @@
             });
             
             const data = await response.json();
-            answerDiv.innerHTML = data.response;
+            answerDiv.textContent = data.response;
             feather.replace();
         } catch (error) {
             answerDiv.innerHTML = 'Sorry, I couldn\'t answer that. Please try the full chatbot for more help.';

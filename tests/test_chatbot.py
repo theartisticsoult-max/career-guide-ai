@@ -13,6 +13,7 @@ class TestChatbot(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False
         cls.client = app.test_client()
 
     def test_01_required_question_skills_in_demand(self):

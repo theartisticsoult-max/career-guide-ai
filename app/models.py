@@ -2,13 +2,20 @@
 import sqlite3
 import json
 import hashlib
+import hmac
 import os
 from datetime import datetime
 
+from werkzeug.security import check_password_hash, generate_password_hash
+
 class Database:
-    def __init__(self, db_path='instance/career_guide.db'):
-        # Ensure instance directory exists
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    def __init__(self, db_path=None):
+        # Tests and deployments can point this at an absolute, isolated file.
+        db_path = db_path or os.getenv('DATABASE_PATH', 'instance/career_guide.db')
+        db_path = os.path.abspath(db_path)
+        directory = os.path.dirname(db_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
         self.db_path = db_path
         self.init_db()
     
@@ -98,15 +105,24 @@ class Database:
             )
         ''')
         
-        # Create default admin user if not exists
-        cursor.execute("SELECT * FROM users WHERE username = ?", ('admin',))
-        if not cursor.fetchone():
-            hashed_password = hashlib.sha256('admin123'.encode()).hexdigest()
-            cursor.execute('''
-                INSERT INTO users (username, email, password, full_name, is_admin)
-                VALUES (?, ?, ?, ?, ?)
-            ''', ('admin', 'admin@careerguide.com', hashed_password, 'Administrator', 1))
-        
+        # Optional admin bootstrap: only when fully configured by environment.
+        admin_username = os.getenv('ADMIN_USERNAME')
+        admin_email = os.getenv('ADMIN_EMAIL')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+        if admin_username and admin_email and admin_password:
+            cursor.execute("SELECT id FROM users WHERE is_admin = 1 LIMIT 1")
+            if not cursor.fetchone():
+                cursor.execute('''
+                    INSERT INTO users (username, email, password, full_name, is_admin)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (
+                    admin_username,
+                    admin_email,
+                    generate_password_hash(admin_password),
+                    'Administrator',
+                    1,
+                ))
+
         conn.commit()
         conn.close()
         print("✅ Database initialized successfully!")
@@ -117,8 +133,8 @@ class Database:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
-            
+            hashed_password = generate_password_hash(password)
+
             cursor.execute('''
                 INSERT INTO users (username, email, password, full_name, phone, education, stream)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -132,24 +148,48 @@ class Database:
             return {'success': False, 'error': str(e)}
     
     def authenticate_user(self, username, password):
-        """Authenticate user"""
+        """Authenticate user, upgrading legacy SHA-256 hashes on success."""
         conn = self.get_connection()
         cursor = conn.cursor()
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        
         cursor.execute('''
-            SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?
-        ''', (username, username, hashed_password))
-        
+            SELECT * FROM users WHERE username = ? OR email = ?
+        ''', (username, username))
+
         user = cursor.fetchone()
         conn.close()
-        
-        if user:
-            # Update last login
-            self.update_last_login(user['id'])
-            return dict(user)
-        return None
-    
+
+        if not user:
+            return None
+
+        stored = user['password'] or ''
+        if stored.startswith(('pbkdf2:', 'scrypt:', 'argon2')):
+            valid = check_password_hash(stored, password)
+        else:
+            # Legacy unsalted SHA-256. Verify in constant time, then upgrade.
+            legacy = hashlib.sha256(password.encode()).hexdigest()
+            valid = hmac.compare_digest(stored, legacy)
+            if valid:
+                try:
+                    self.update_password_hash(user['id'], generate_password_hash(password))
+                except Exception as exc:
+                    # Never lock a user out because the upgrade write failed.
+                    print(f"Could not upgrade legacy password hash: {exc}")
+
+        if not valid:
+            return None
+
+        self.update_last_login(user['id'])
+        return dict(user)
+
+    def update_password_hash(self, user_id, password_hash):
+        """Write a new password hash for a user."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE users SET password = ? WHERE id = ?', (password_hash, user_id))
+        conn.commit()
+        conn.close()
+        return True
+
     def update_last_login(self, user_id):
         """Update user's last login time"""
         conn = self.get_connection()
@@ -472,3 +512,7 @@ class Database:
         
         conn.close()
         return stats
+
+
+# Shared database instance used by the services.
+db = Database()

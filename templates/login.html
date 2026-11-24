@@ -15,6 +15,7 @@
                 </div>
                 
                 <form method="POST" class="login-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="username">Username or Email</label>
                         <div class="input-icon">
@@ -47,15 +48,6 @@
                 
                 <div class="login-footer">
                     <p>Don't have an account? <a href="/register">Create an account</a></p>
-                </div>
-                
-                <div class="demo-credentials">
-                    <p><strong>Demo Credentials:</strong></p>
-                    <div class="demo-box">
-                        <span>Username: <strong>admin</strong></span>
-                        <span>Password: <strong>admin123</strong></span>
-                    </div>
-                    <p class="demo-note">(For testing purposes only)</p>
                 </div>
             </div>
         </div>

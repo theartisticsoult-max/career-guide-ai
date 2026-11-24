@@ -10,16 +10,22 @@ import re
 import logging
 from typing import List, Dict, Any, Optional
 
+from app.services.llm_response import parse_explanation
+
 logger = logging.getLogger(__name__)
 
 # Default Groq model - high capability, fast, cost-effective
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 
 SYSTEM_PROMPT = """You are an expert AI Career Guidance Counselor for Career Guide AI.
-Your mission is to provide personalized, encouraging, practical, and highly actionable career advice to students, job seekers, and career changers.
+You only write explanations and roadmaps. Career ranking, match scores and career
+selection are computed by application code and must never be invented or reordered by you.
+
+Respond with a single valid JSON object and no other text:
+{"answer": "<your Markdown explanation or roadmap>"}
 
 Guidelines:
-1. Provide structured responses using Markdown (headers, bullet points, bold text).
+1. Put the entire Markdown answer in the "answer" field (headers, bullet points, bold text).
 2. When answering about in-demand skills, categorize them clearly (e.g., Core Programming, Cloud & DevOps, AI/ML, Soft Skills) and explain why they matter.
 3. When comparing roles (e.g., AI Engineer vs Data Scientist), clearly highlight: Core Purpose, Key Responsibilities, Required Tech Stack, Math/Stats vs Engineering focus, and Typical Career Trajectory.
 4. When detailing career roadmaps (e.g., How to become a backend engineer), break the journey down into logical phases: Foundations, Core Technologies, Databases & APIs, Architecture & System Design, and Projects/Certifications.
@@ -308,10 +314,12 @@ def get_chatbot_response(message: str, history: Optional[List[Dict[str, str]]] =
     if not message or not message.strip():
         return "Please ask a question about careers, skills, education, or salaries!"
 
-    # Attempt Groq API completion
+    # Attempt Groq API completion; only validated explanations are returned.
     groq_reply = call_groq_api(message, history)
     if groq_reply:
-        return groq_reply
+        explanation = parse_explanation(groq_reply)
+        if explanation:
+            return explanation
 
     # Fallback to intelligent domain-aware responses
     return get_intelligent_fallback_response(message, career_df=career_df)

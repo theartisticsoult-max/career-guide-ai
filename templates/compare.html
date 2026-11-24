@@ -79,6 +79,12 @@
 </section>
 
 <script>
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (ch) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch];
+        });
+    }
+
     const compareData = {
         careers: {},
         selectedIds: []
@@ -114,7 +120,7 @@
             // Update header
             const header = document.getElementById(`career${position}Header`);
             if (header) {
-                header.innerHTML = `<a href="/career/${careerId}">${career.Career_Name}</a>`;
+                header.innerHTML = `<a href="/career/${encodeURIComponent(careerId)}">${escapeHtml(career.Career_Name)}</a>`;
             }
             
             renderCompareTable();
@@ -166,7 +172,7 @@
                         value = value.split(',').slice(0, 3).join(', ');
                         if (value.length > 50) value = value.substring(0, 50) + '...';
                     }
-                    html += `<td>${value || 'N/A'}</td>`;
+                    html += `<td>${escapeHtml(value || 'N/A')}</td>`;
                 } else {
                     html += '<td class="empty">—</td>';
                 }
