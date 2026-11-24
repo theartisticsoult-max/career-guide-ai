@@ -197,6 +197,7 @@
     
     // Quick question
     document.getElementById('askBtn')?.addEventListener('click', async function() {
+        const careerName = {{ career.Career_Name|tojson }};
         const question = document.getElementById('quickQuestion').value;
         if (!question) return;
         
@@ -210,7 +211,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    message: `Tell me about ${career.Career_Name}. ${question}`
+                    message: `Tell me about ${careerName}. ${question}`
                 })
             });
             

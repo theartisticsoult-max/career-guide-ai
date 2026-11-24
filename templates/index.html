@@ -361,6 +361,7 @@ async function loadFeaturedCareers() {
         const careers = await response.json();
         
         const container = document.getElementById('featuredCareers');
+        if (!container) return;
         
         container.innerHTML = careers.map(career => `
             <div class="career-card">

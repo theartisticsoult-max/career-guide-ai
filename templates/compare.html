@@ -85,22 +85,31 @@
         });
     }
 
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-message ' + (type || 'info');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(function () { toast.remove(); }, 3000);
+    }
+
+    const serverSelectedIds = {{ selected_ids|tojson }};
     const compareData = {
         careers: {},
         selectedIds: []
     };
-    
-    // Load saved comparison from localStorage
+
+    // Prefer shared links, then fall back to the local comparison list.
     function loadCompareList() {
-        const saved = localStorage.getItem('compareList');
-        if (saved) {
-            const ids = JSON.parse(saved);
-            ids.forEach((id, index) => {
-                if (index < 3) {
-                    loadCareerData(id, index + 1);
-                }
-            });
+        let ids = serverSelectedIds;
+        if (!ids.length) {
+            try {
+                ids = JSON.parse(localStorage.getItem('compareList') || '[]');
+            } catch (error) {
+                ids = [];
+            }
         }
+        ids.slice(0, 3).forEach((id, index) => loadCareerData(id, index + 1));
     }
     
     // Fetch career data from API

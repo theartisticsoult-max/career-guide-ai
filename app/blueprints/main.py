@@ -1,5 +1,5 @@
 """Public pages and assessment pages."""
-from flask import Blueprint, render_template, session
+from flask import Blueprint, render_template, request, session
 
 from app.blueprints.auth import login_required
 from app.services import career_data, user_service
@@ -54,6 +54,12 @@ def chatbot():
     return render_template('chatbot.html')
 
 
+@main_bp.route('/resources')
+def resources():
+    """Learning resources page."""
+    return render_template('resources.html')
+
+
 @main_bp.route('/quiz')
 @login_required
 def quiz():
@@ -99,7 +105,13 @@ def career_detail(career_id):
 def compare():
     if not career_data.is_loaded():
         return "Error loading data", 500
-    return render_template('compare.html', careers=career_data.get_compare_options())
+    requested_ids = [cid.strip() for cid in request.args.get('ids', '').split(',') if cid.strip()]
+    selected_ids = [cid for cid in requested_ids if career_data.get_career(cid) is not None][:3]
+    return render_template(
+        'compare.html',
+        careers=career_data.get_compare_options(),
+        selected_ids=selected_ids,
+    )
 
 
 @main_bp.route('/psychometric-results')

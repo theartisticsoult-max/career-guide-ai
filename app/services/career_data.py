@@ -5,7 +5,6 @@ responsible for choosing or ordering careers.
 """
 import os
 
-import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -174,8 +173,8 @@ def get_recommendations(preferences, top_n=12):
 
     if not user_profile.strip():
         recommendations = career_df.head(top_n).to_dict('records')
-        for i, rec in enumerate(recommendations):
-            rec['match_score'] = 50 + np.random.randint(0, 30)
+        for rec in recommendations:
+            rec['match_score'] = 50.0
         return recommendations
 
     try:

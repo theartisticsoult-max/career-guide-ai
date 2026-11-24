@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 os.environ['SECRET_KEY'] = 'test-secret-key-123'
 
 from app import app, db
-import chatbot_service
+from app.services import chatbot_service
 
 class TestChatbot(unittest.TestCase):
     @classmethod
@@ -84,7 +84,7 @@ class TestChatbot(unittest.TestCase):
         self.assertIn('response', data)
         self.assertTrue(len(data['response']) > 20)
 
-    @patch('chatbot_service.get_groq_client')
+    @patch('app.services.chatbot_service.get_groq_client')
     def test_07_groq_api_live_mock_integration(self, mock_client_factory):
         """Test that Groq API integration correctly parses completion response."""
         mock_client = MagicMock()
@@ -117,7 +117,7 @@ class TestChatbot(unittest.TestCase):
             self.assertEqual(messages[2]['role'], 'user')
             self.assertEqual(messages[2]['content'], 'How do I become a backend engineer?')
 
-    @patch('chatbot_service.get_groq_client')
+    @patch('app.services.chatbot_service.get_groq_client')
     def test_08_groq_api_error_handling_and_fallback(self, mock_client_factory):
         """Test that Groq API errors are caught gracefully without failing the request."""
         mock_client = MagicMock()
