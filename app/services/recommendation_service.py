@@ -29,6 +29,9 @@ STOPWORDS = {
 RECOMMENDATION_SYSTEM_PROMPT = """You write short, factual career explanations.
 Career selection, ranking and scores are computed by application code. Never
 invent, reorder or renumber careers, and never include scores or percentages.
+Use only the career facts supplied in the user message. Do not invent courses,
+qualifications, licences, jobs or salary figures. If a career may need formal
+registration, say so only in general terms.
 
 Respond with a single valid JSON object and no other text. Use one key per
 career ID supplied by the user message, mapped to one short explanation (max
@@ -85,6 +88,8 @@ def build_context(user_id):
         'stream': _as_text(profile.stream if profile else ''),
         'interests_text': _as_text(profile.interests_text if profile else ''),
         'city': _as_text(profile.city if profile else ''),
+        'country': _as_text(profile.country if profile else ''),
+        'region': _as_text(profile.region if profile else ''),
     }
 
 
@@ -101,6 +106,31 @@ def _stage_allowed(context, career):
         return True
     stages = set(_as_text(career.get('stages')).split('|'))
     return context['stage'] in stages
+
+
+def _stream_allowed(context, career):
+    stream = _as_text(context.get('stream')).strip()
+    if not stream or stream.lower() in {'any', 'not sure', 'other'}:
+        return True
+    allowed = {
+        value.strip().lower()
+        for value in _as_text(career.get('eligible_streams')).split('|')
+    }
+    if 'any' in allowed:
+        return True
+    return stream.lower() in allowed or any(
+        token in allowed for token in _tokens(stream)
+    )
+
+
+def _location_score(context, career):
+    country = _as_text(context.get('country')).strip().lower()
+    career_country = _as_text(career.get('country')).strip().lower()
+    if not country or not career_country or career_country == country:
+        return 1.0
+    if _as_text(career.get('region')).strip().lower() == 'pan india':
+        return 0.6
+    return 0.3
 
 
 def _cosine(user_values, career_values):
@@ -161,6 +191,8 @@ def _preference_score(context, career, max_salary):
     if prefs.get('stability', 0.5) >= 0.5:
         components.append(1.0 if style_text & {'structured', 'precision', 'patient'} else 0.5)
 
+    components.append(_location_score(context, career))
+
     return sum(components) / len(components) if components else 0.5
 
 
@@ -179,6 +211,25 @@ def _fallback_explanation(career, breakdown):
     return 'This career {}.'.format(', '.join(parts))
 
 
+def _add_exploration_fields(item):
+    """Add non-scoring context used by the recommendations screen."""
+    skills = [
+        value.strip() for value in (
+            _as_text(item.get('Key_Technical_Skills')).split(',') +
+            _as_text(item.get('Key_Soft_Skills')).split(',')
+        ) if value.strip()
+    ]
+    item['strengths'] = skills[:5]
+    item['pathway'] = _as_text(item.get('pathway')) or (
+        'Check the education route and entry requirements for this career.'
+    )
+    item['licensing_note'] = _as_text(item.get('licensing_note')) or (
+        'Verify local rules before committing to this path.'
+    )
+    item['non_tech_eligible'] = _as_text(item.get('non_tech_eligible')) == 'yes'
+    return item
+
+
 def rank(context, top_n=TOP_N):
     """Return code-ranked careers; no language model is involved."""
     careers = career_data.get_all_careers()
@@ -189,9 +240,14 @@ def rank(context, top_n=TOP_N):
     salaries = [value for value in salaries if value is not None]
     max_salary = max(salaries) if salaries else 0
 
-    eligible = [career for career in careers if _stage_allowed(context, career)]
+    eligible = [
+        career for career in careers
+        if _stage_allowed(context, career) and _stream_allowed(context, career)
+    ]
     if not eligible:
-        eligible = careers
+        eligible = [
+            career for career in careers if _stage_allowed(context, career)
+        ] or careers
 
     ranked = []
     for career in eligible:
@@ -217,7 +273,7 @@ def rank(context, top_n=TOP_N):
             'match_score': score,
             'why_fits': _fallback_explanation(career, breakdown),
         })
-        ranked.append((item, breakdown))
+        ranked.append((_add_exploration_fields(item), breakdown))
 
     ranked.sort(key=lambda pair: (-pair[0]['score'], pair[0]['career_id']))
     top = []
@@ -234,8 +290,16 @@ def explain(ranked):
 
     keys = [item['career_id'] for item in ranked]
     lines = [
-        '{}: {} (code rank {}, code score {})'.format(
-            item['career_id'], item.get('Career_Name', ''), item['rank'], item['score']
+        '{}: {} (code rank {}). Category: {}. Education: {}. Skills: {}. '
+        'Pathway: {}. Licensing note: {}.'.format(
+            item['career_id'],
+            item.get('Career_Name', ''),
+            item['rank'],
+            _as_text(item.get('Category')),
+            _as_text(item.get('Required_Degree')),
+            _as_text(item.get('Key_Technical_Skills')),
+            _as_text(item.get('pathway')),
+            _as_text(item.get('licensing_note')),
         )
         for item in ranked
     ]
@@ -283,7 +347,7 @@ def _item_from_row(row):
         'match_score': row.score,
         'why_fits': row.why_fits or '',
     })
-    return item
+    return _add_exploration_fields(item)
 
 
 def get_recommendations(user_id):

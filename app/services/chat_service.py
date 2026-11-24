@@ -76,6 +76,10 @@ def build_context(user_id):
             lines.append('- Interests: ' + profile.interests_text)
         if profile.city:
             lines.append('- City: ' + profile.city)
+        if profile.country:
+            lines.append('- Country: ' + profile.country)
+        if profile.region:
+            lines.append('- State/region: ' + profile.region)
 
     chosen = ChosenCareer.query.filter_by(user_id=user_id).order_by(
         ChosenCareer.id.desc()

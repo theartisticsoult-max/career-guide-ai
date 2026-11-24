@@ -8,6 +8,8 @@ from werkzeug.datastructures import MultiDict
 
 from app import app, db
 from app.services import (
+    career_data,
+    chat_service,
     discovery_service,
     profile_service,
     recommendation_service,
@@ -163,9 +165,17 @@ class NewJourneysTestCase(unittest.TestCase):
             result = recommendation_service.get_recommendations(user['id'])
             self.assertFalse(result['needs_assessment'])
             self.assertEqual(len(result['items']), 10)
+            self.assertTrue(any(item['non_tech_eligible'] for item in result['items']))
+            for item in result['items']:
+                self.assertTrue(item['licensing_note'])
+                self.assertTrue(item['pathway'])
 
         html = self.client.get('/recommendations').data.decode('utf-8', 'replace')
         self.assertIn('Your Career Matches', html)
+        self.assertIn('Top 3 to explore first', html)
+        self.assertIn('More careers to explore', html)
+        self.assertIn('Strengths to build on', html)
+        self.assertIn('Possible pathway', html)
         self.assertNotIn('% match', html)
 
     def test_discovery_rejects_incomplete_answers(self):
@@ -178,6 +188,26 @@ class NewJourneysTestCase(unittest.TestCase):
             state = discovery_service.get_state(user['id'])
             self.assertEqual(state['status'], 'in_progress')
             self.assertEqual(state['saved'], {})
+
+    def test_dataset_exposes_location_and_eligibility_metadata(self):
+        with app.app_context():
+            career = career_data.get_career('C001')
+            for field in ('country', 'region', 'eligible_streams',
+                          'non_tech_eligible', 'licensing_note', 'pathway'):
+                self.assertIn(field, career)
+                self.assertTrue(str(career[field]).strip())
+
+    def test_chat_context_includes_location_without_inventing_scores(self):
+        user = self._new_user('mentor_context_user')
+        with app.app_context():
+            profile_service.save_profile(
+                user['id'], 'college', 'Arts', 'design',
+                city='Pune', country='India', region='Maharashtra',
+            )
+            context = chat_service.build_context(user['id'])
+            self.assertIn('Country: India', context)
+            self.assertIn('State/region: Maharashtra', context)
+            self.assertNotIn('% match', context)
 
 
 if __name__ == '__main__':

@@ -13,6 +13,8 @@ NEW_COLUMNS = [
     'riasec_R', 'riasec_I', 'riasec_A', 'riasec_S', 'riasec_E', 'riasec_C',
     'apt_numerical', 'apt_verbal', 'apt_logical', 'apt_spatial',
     'stages', 'work_style', 'key_exams',
+    'country', 'region', 'eligible_streams', 'non_tech_eligible',
+    'licensing_note', 'pathway',
 ]
 
 RIASEC_KEYS = ('riasec_R', 'riasec_I', 'riasec_A', 'riasec_S', 'riasec_E', 'riasec_C')
@@ -90,6 +92,38 @@ STAGES_BY_CATEGORY = {
 
 DEFAULT_STAGES = 'class12|college'
 
+# Location and eligibility metadata. The catalogue is India-centric today;
+# these fields make that explicit and keep other countries from being silently
+# presented as verified local information.
+COUNTRY_BY_DOMAIN = {domain: 'India' for domain in DOMAIN_PROFILES}
+REGION_BY_DOMAIN = {domain: 'Pan India' for domain in DOMAIN_PROFILES}
+
+ELIGIBLE_STREAMS_BY_DOMAIN = {
+    'tech': 'Science|Engineering',
+    'science/research': 'Science|Engineering',
+    'healthcare': 'Science',
+    'business/finance': 'Commerce|Science|Any',
+    'creative/media': 'Any',
+    'law/govt': 'Any',
+    'education/social': 'Any',
+    'skilled/vocational': 'Any',
+    'sports/agri/hospitality': 'Any',
+}
+
+LICENSING_PATTERNS = (
+    'mbbs', 'bds', 'llb', 'bar council', 'medical council',
+    'registration', 'licence', 'license', 'accredited', 'council',
+)
+
+PATHWAY_BY_STAGES = {
+    'class10|class12|college': (
+        'Class 10+2 or diploma → entry role → experience → specialist role'
+    ),
+    'class12|college': (
+        'Class 12 → degree or diploma → entry role → specialist role'
+    ),
+}
+
 WORK_STYLE_BY_DOMAIN = {
     'tech': 'analytical|independent|structured',
     'healthcare': 'team|precision|service',
@@ -150,6 +184,15 @@ def normalise_exams(text, category):
     return EXAM_BY_CATEGORY.get(category, 'none')
 
 
+def licensing_note(required_degree, exams):
+    """Return a cautious note only when the source data mentions regulation."""
+    text = f"{required_degree or ''} {exams or ''}".lower()
+    if any(pattern in text for pattern in LICENSING_PATTERNS):
+        return ('Check current professional registration or licensing rules '
+                'with the relevant authority in your country.')
+    return 'No special licence is listed in the source data; verify local rules.'
+
+
 def enrich_career_df(df):
     """Return a copy of ``df`` with all recommendation columns filled."""
     enriched = df.copy()
@@ -161,12 +204,21 @@ def enrich_career_df(df):
             position = (RIASEC_KEYS + APTITUDE_KEYS).index(key)
             profile[position] = value
 
+        stages = STAGES_BY_CATEGORY.get(category, DEFAULT_STAGES)
         enriched.at[index, 'domain'] = domain
         for key, value in zip(RIASEC_KEYS + APTITUDE_KEYS, profile):
             enriched.at[index, key] = round(float(value), 2)
-        enriched.at[index, 'stages'] = STAGES_BY_CATEGORY.get(category, DEFAULT_STAGES)
+        enriched.at[index, 'stages'] = stages
         enriched.at[index, 'work_style'] = WORK_STYLE_BY_DOMAIN[domain]
         enriched.at[index, 'key_exams'] = normalise_exams(row.get('Entrance_Exams'), category)
+        enriched.at[index, 'country'] = COUNTRY_BY_DOMAIN[domain]
+        enriched.at[index, 'region'] = REGION_BY_DOMAIN[domain]
+        enriched.at[index, 'eligible_streams'] = ELIGIBLE_STREAMS_BY_DOMAIN[domain]
+        enriched.at[index, 'non_tech_eligible'] = 'yes' if domain != 'tech' else 'no'
+        enriched.at[index, 'licensing_note'] = licensing_note(
+            row.get('Required_Degree'), row.get('Entrance_Exams')
+        )
+        enriched.at[index, 'pathway'] = PATHWAY_BY_STAGES.get(stages, PATHWAY_BY_STAGES[DEFAULT_STAGES])
     return enriched
 
 
@@ -192,9 +244,13 @@ def validate_dataset(df):
         elif ((values < 0) | (values > 1)).any():
             errors.append(f'{column} has values outside 0-1')
 
-    for column in ('domain', 'stages', 'work_style', 'key_exams'):
+    for column in ('domain', 'stages', 'work_style', 'key_exams',
+                   'country', 'region', 'eligible_streams', 'licensing_note', 'pathway'):
         if df[column].isna().any() or (df[column].astype(str).str.strip() == '').any():
             errors.append(f'{column} has empty values')
+
+    if not set(df['non_tech_eligible'].astype(str)).issubset({'yes', 'no'}):
+        errors.append('non_tech_eligible must be yes or no')
 
     valid_stages = {'class10', 'class12', 'college'}
     for stage in df['stages'].astype(str):

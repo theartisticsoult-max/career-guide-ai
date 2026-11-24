@@ -18,28 +18,58 @@
         </div>
         {% endif %}
 
-        <div class="recommendations-grid">
-            {% for rec in recommendations %}
-            <div class="career-card recommendation-card">
-                <div class="career-header">
-                    <h3>#{{ rec.rank }} {{ rec.Career_Name }}</h3>
-                    <span class="match-badge">Explore #{{ rec.rank }}</span>
-                </div>
-                <p class="career-category">{{ rec.Category }}</p>
-                <p>{{ rec.why_fits }}</p>
-                <p><strong>Education:</strong> {{ rec.Min_Education or 'Varies' }}</p>
-                <p><strong>Starting salary:</strong> {{ rec.Entry_Salary_LPA or 'Varies' }} LPA</p>
-                <p><strong>Outlook:</strong> {{ rec.Job_Outlook or 'Varies' }}</p>
-
-                <form method="POST" action="{{ url_for('main.choose_recommendation') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="career_id" value="{{ rec.career_id }}">
-                    <button type="submit" class="btn btn-small btn-primary">Choose this career</button>
-                </form>
-                <a href="{{ url_for('main.career_detail', career_id=rec.career_id) }}" class="btn btn-small btn-outline">View details</a>
+        {% macro career_card(rec) %}
+        <div class="career-card recommendation-card">
+            <div class="career-header">
+                <h3>#{{ rec.rank }} {{ rec.Career_Name }}</h3>
+                <span class="match-badge">Explore #{{ rec.rank }}</span>
             </div>
+            <p class="career-category">{{ rec.Category }}</p>
+            <p>{{ rec.why_fits }}</p>
+            {% if rec.strengths %}
+            <p><strong>Strengths to build on:</strong></p>
+            <p>
+                {% for skill in rec.strengths %}
+                <span class="skill-tag">{{ skill }}</span>
+                {% endfor %}
+            </p>
+            {% endif %}
+            <p><strong>Gaps to check:</strong> {{ rec.Required_Degree or 'Requirements vary' }}. {{ rec.licensing_note }}</p>
+            <p><strong>Education:</strong> {{ rec.Min_Education or 'Varies' }}</p>
+            <p><strong>Possible pathway:</strong> {{ rec.pathway }}</p>
+            <p><strong>Outlook:</strong> {{ rec.Job_Outlook or 'Varies' }}</p>
+
+            <form method="POST" action="{{ url_for('main.choose_recommendation') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="career_id" value="{{ rec.career_id }}">
+                <button type="submit" class="btn btn-small btn-primary">Choose this career</button>
+            </form>
+            <a href="{{ url_for('main.career_detail', career_id=rec.career_id) }}" class="btn btn-small btn-outline">View details</a>
+            <a href="{{ url_for('main.compare', ids=rec.career_id) }}" class="btn btn-small btn-outline">Compare</a>
+        </div>
+        {% endmacro %}
+
+        <div class="results-header">
+            <h2>Top 3 to explore first</h2>
+            <p>These are starting points, not a score or a guarantee.</p>
+        </div>
+        <div class="recommendations-grid">
+            {% for rec in recommendations[:3] %}
+                {{ career_card(rec) }}
             {% endfor %}
         </div>
+
+        {% if recommendations|length > 3 %}
+        <div class="results-header">
+            <h2>More careers to explore</h2>
+            <p>Open any career to learn more, or compare up to three options.</p>
+        </div>
+        <div class="recommendations-grid">
+            {% for rec in recommendations[3:] %}
+                {{ career_card(rec) }}
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
