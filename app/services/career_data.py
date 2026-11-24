@@ -9,6 +9,8 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from app.services.career_dataset import ensure_dataset_columns
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CAREER_CSV = os.path.join(PROJECT_ROOT, 'data', 'career.csv')
 
@@ -35,7 +37,7 @@ def load_career_data():
     global career_df, vectorizer, career_vectors
 
     try:
-        career_df = pd.read_csv(CAREER_CSV)
+        career_df = ensure_dataset_columns(pd.read_csv(CAREER_CSV))
         print(f"Loaded {len(career_df)} careers")
 
         # Prepare text features
