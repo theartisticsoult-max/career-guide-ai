@@ -10,6 +10,13 @@
             <h1>Welcome, {{ user.full_name or user.username }}!</h1>
             <p>Track your career journey and access your assessment results</p>
         </div>
+
+        {% if needs_profile %}
+        <div class="dashboard-card">
+            <p>Complete your profile once to get better career suggestions.</p>
+            <a href="/profile" class="btn btn-primary btn-small">Fill in your profile</a>
+        </div>
+        {% endif %}
         
         <div class="dashboard-stats">
             <div class="stat-card">

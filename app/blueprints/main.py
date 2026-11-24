@@ -1,8 +1,8 @@
 """Public pages and assessment pages."""
-from flask import Blueprint, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.blueprints.auth import login_required
-from app.services import career_data, user_service
+from app.services import career_data, profile_service, user_service
 from data.questions import (
     PERSONALITY_QUESTIONS,
     INTEREST_QUESTIONS,
@@ -126,6 +126,32 @@ def psychometric_results():
 def dashboard():
     """User dashboard"""
     return render_template('dashboard.html', **user_service.get_dashboard_data(session['user_id']))
+
+
+@main_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """One-time profile form shown after registration."""
+    user_id = session['user_id']
+    if request.method == 'POST':
+        stage = request.form.get('stage', '').strip()
+        if stage not in profile_service.STAGES:
+            flash('Please choose a valid class stage.', 'error')
+            return redirect(url_for('main.profile'))
+        result = profile_service.save_profile(
+            user_id,
+            stage,
+            stream=request.form.get('stream', '').strip(),
+            interests_text=request.form.get('interests_text', '').strip(),
+            city=request.form.get('city', '').strip(),
+        )
+        if not result['success']:
+            flash(result['error'], 'error')
+            return redirect(url_for('main.profile'))
+        flash('Profile saved!', 'success')
+        return redirect(url_for('main.dashboard'))
+
+    return render_template('profile.html', profile=profile_service.get_profile(user_id))
 
 
 @main_bp.route('/iq-test')

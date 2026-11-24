@@ -70,6 +70,21 @@ class User(BaseModel):
     admin_logs = sqlalchemy.orm.relationship(
         'AdminLog', cascade='all, delete-orphan', passive_deletes=True
     )
+    profile = sqlalchemy.orm.relationship(
+        'Profile', backref='user', uselist=False, cascade='all, delete-orphan', passive_deletes=True
+    )
+    assessments = sqlalchemy.orm.relationship(
+        'Assessment', backref='user', cascade='all, delete-orphan', passive_deletes=True
+    )
+    chosen_careers = sqlalchemy.orm.relationship(
+        'ChosenCareer', backref='user', cascade='all, delete-orphan', passive_deletes=True
+    )
+    roadmaps = sqlalchemy.orm.relationship(
+        'Roadmap', backref='user', cascade='all, delete-orphan', passive_deletes=True
+    )
+    chat_messages = sqlalchemy.orm.relationship(
+        'ChatMessage', backref='user', cascade='all, delete-orphan', passive_deletes=True
+    )
 
 
 class PsychometricResult(BaseModel):
@@ -136,6 +151,171 @@ class AdminLog(BaseModel):
     action = sqlalchemy.Column(sqlalchemy.String)
     target_user_id = sqlalchemy.Column(sqlalchemy.Integer)
     timestamp = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+
+
+class Profile(BaseModel):
+    __tablename__ = 'profiles'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    user_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+        unique=True,
+    )
+    stage = sqlalchemy.Column(
+        sqlalchemy.Enum('class10', 'class12', 'college', name='profile_stage'),
+        nullable=False,
+    )
+    stream = sqlalchemy.Column(sqlalchemy.String)
+    interests_text = sqlalchemy.Column(sqlalchemy.Text)
+    city = sqlalchemy.Column(sqlalchemy.String)
+    created_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+    updated_at = sqlalchemy.Column(
+        sqlalchemy.TIMESTAMP, server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+
+class Assessment(BaseModel):
+    __tablename__ = 'assessments'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    user_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    status = sqlalchemy.Column(sqlalchemy.String, default='in_progress')
+    current_part = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+    started_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+    finished_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP)
+
+    answers = sqlalchemy.orm.relationship(
+        'AssessmentAnswer', backref='assessment', cascade='all, delete-orphan', passive_deletes=True
+    )
+    score = sqlalchemy.orm.relationship(
+        'AssessmentScore', backref='assessment', uselist=False,
+        cascade='all, delete-orphan', passive_deletes=True
+    )
+    recommendations = sqlalchemy.orm.relationship(
+        'Recommendation', backref='assessment', cascade='all, delete-orphan', passive_deletes=True
+    )
+
+
+class AssessmentAnswer(BaseModel):
+    __tablename__ = 'assessment_answers'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    assessment_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('assessments.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    part = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    question_key = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    answer_text = sqlalchemy.Column(sqlalchemy.Text)
+    created_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+
+
+class AssessmentScore(BaseModel):
+    __tablename__ = 'assessment_scores'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    assessment_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('assessments.id', ondelete='CASCADE'),
+        nullable=False,
+        unique=True,
+    )
+    riasec_json = sqlalchemy.Column(sqlalchemy.Text)
+    aptitude_json = sqlalchemy.Column(sqlalchemy.Text)
+    prefs_json = sqlalchemy.Column(sqlalchemy.Text)
+    computed_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+
+
+class Recommendation(BaseModel):
+    __tablename__ = 'recommendations'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    assessment_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('assessments.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    career_id = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    rank = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    score = sqlalchemy.Column(sqlalchemy.Float)
+    why_fits = sqlalchemy.Column(sqlalchemy.Text)
+
+
+class ChosenCareer(BaseModel):
+    __tablename__ = 'chosen_careers'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    user_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    career_id = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    chosen_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+
+
+class Roadmap(BaseModel):
+    __tablename__ = 'roadmaps'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    user_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    career_id = sqlalchemy.Column(sqlalchemy.String)
+    version = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+    generated_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
+
+    items = sqlalchemy.orm.relationship(
+        'RoadmapItem', backref='roadmap', cascade='all, delete-orphan', passive_deletes=True
+    )
+
+
+class RoadmapItem(BaseModel):
+    __tablename__ = 'roadmap_items'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    roadmap_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('roadmaps.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    phase = sqlalchemy.Column(sqlalchemy.String)
+    type = sqlalchemy.Column(
+        sqlalchemy.Enum(
+            'skill', 'course', 'project', 'certification', 'exam',
+            name='roadmap_item_type',
+        ),
+        nullable=False,
+    )
+    title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    detail = sqlalchemy.Column(sqlalchemy.Text)
+    est_weeks = sqlalchemy.Column(sqlalchemy.Integer)
+    done = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+    done_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP)
+
+
+class ChatMessage(BaseModel):
+    __tablename__ = 'chat_messages'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    user_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    role = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    message = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
+    created_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
 
 
 class _RowShim:

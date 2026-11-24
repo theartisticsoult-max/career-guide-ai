@@ -71,8 +71,11 @@ class TestSecretKey(SecurityTestCase):
         env.pop('SECRET_KEY', None)
         env['FLASK_DEBUG'] = '0'
         env['PYTHONIOENCODING'] = 'utf-8'
+        code = (
+            'import dotenv; dotenv.load_dotenv = lambda *a, **k: None; import app'
+        )
         result = subprocess.run(
-            [sys.executable, '-c', 'import app'],
+            [sys.executable, '-c', code],
             cwd=ROOT, env=env, capture_output=True, text=True,
         )
         self.assertNotEqual(result.returncode, 0)

@@ -89,8 +89,11 @@ def register():
         )
 
         if result['success']:
-            flash('Registration successful! Please login to continue.', 'success')
-            return redirect(url_for('auth.login'))
+            session['user_id'] = result['user_id']
+            session['username'] = username
+            session['is_admin'] = 0
+            flash('Registration successful! Tell us a little about yourself.', 'success')
+            return redirect(url_for('main.profile'))
         else:
             flash(f'Registration failed: {result["error"]}', 'error')
 

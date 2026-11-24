@@ -1,6 +1,7 @@
 """User, dashboard and admin data operations."""
 
 from app import db
+from app.services import profile_service
 
 
 def authenticate_user(username, password):
@@ -28,6 +29,7 @@ def get_dashboard_data(user_id):
         'quiz_results': db.get_quiz_results(user_id, limit=1),
         'iq_results': db.get_iq_test_results(user_id, limit=1),
         'iq_stats': db.get_iq_test_stats(user_id),
+        'needs_profile': profile_service.needs_profile(user_id),
     }
 
 
