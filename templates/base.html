@@ -370,11 +370,11 @@
                         
                         {% if session.user_id %}
                             <li><a href="/dashboard">Dashboard</a></li>
-                            <li><a href="/quiz">Take Quiz</a></li>
-                            <li><a href="/psychometric-test">Psychometric Test</a></li>
-                            <li><a href="/chatbot">AI Assistant</a></li>
-                            
-                            <li><a href="/compare">Compare Careers</a></li>
+                            <li><a href="/discover">Discover Careers</a></li>
+                            <li><a href="/recommendations">My Recommendations</a></li>
+                            <li><a href="/roadmap">My Roadmap</a></li>
+                            <li><a href="/chatbot">AI Career Mentor</a></li>
+                            <li><a href="/profile">Profile &amp; Settings</a></li>
                             {% if session.is_admin %}
                                 <li><a href="/admin">Admin Panel</a></li>
                             {% endif %}
@@ -385,7 +385,7 @@
                                 </form>
                             </li>
                         {% else %}
-                            
+                            <li><a href="/discover">Discover Careers</a></li>
                             <li><a href="/compare">Compare Careers</a></li>
                             <li><a href="/login">Login</a></li>
                             <li><a href="/register" class="btn btn-primary btn-small" style="padding: 8px 20px;">Sign Up Free</a></li>
@@ -435,14 +435,14 @@
                 <div class="footer-section">
                     <h4>Quick Links</h4>
                     <ul>
-                        {% if session.user_id %}
-                            <li><a href="/psychometric-test">Psychometric Test</a></li>
-                            <li><a href="/quiz">Career Quiz</a></li>
-                            <li><a href="/chatbot">AI Chatbot</a></li>
-                        {% endif %}
-                        
-
+                        <li><a href="/discover">Discover Careers</a></li>
                         <li><a href="/compare">Compare Careers</a></li>
+                        {% if session.user_id %}
+                            <li><a href="/recommendations">My Recommendations</a></li>
+                            <li><a href="/roadmap">My Roadmap</a></li>
+                            <li><a href="/chatbot">AI Career Mentor</a></li>
+                            <li><a href="/profile">Profile &amp; Settings</a></li>
+                        {% endif %}
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -461,7 +461,7 @@
                         
                         <li><a href="/compare">Career Comparison</a></li>
                         {% if session.user_id %}
-                            <li><a href="/psychometric-test">Psychometric Test</a></li>
+                            <li><a href="/assessment">Career Discovery</a></li>
                         {% endif %}
                     </ul>
                 </div>

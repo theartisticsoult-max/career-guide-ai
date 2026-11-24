@@ -15,7 +15,8 @@ def needs_profile(user_id):
     return get_profile(user_id) is None
 
 
-def save_profile(user_id, stage, stream=None, interests_text=None, city=None):
+def save_profile(user_id, stage, stream=None, interests_text=None, city=None,
+                 country=None, region=None):
     """Create or update the user's profile. Routes validate before calling."""
     if stage not in STAGES:
         return {'success': False, 'error': 'Invalid stage'}
@@ -29,5 +30,7 @@ def save_profile(user_id, stage, stream=None, interests_text=None, city=None):
     profile.stream = stream or None
     profile.interests_text = interests_text or None
     profile.city = city or None
+    profile.country = country or None
+    profile.region = region or None
     sqlalchemy.session.commit()
     return {'success': True, 'profile': profile.to_dict()}

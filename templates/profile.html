@@ -44,6 +44,18 @@
                                value="{{ profile.city if profile and profile.city else '' }}">
                     </div>
 
+                    <div class="form-group">
+                        <label for="country">Country or region</label>
+                        <input type="text" id="country" name="country" placeholder="e.g. India"
+                               value="{{ profile.country if profile and profile.country else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="region">State / province (optional)</label>
+                        <input type="text" id="region" name="region" placeholder="e.g. Karnataka"
+                               value="{{ profile.region if profile and profile.region else '' }}">
+                    </div>
+
                     <button type="submit" class="btn btn-primary btn-block">Save Profile</button>
                 </form>
             </div>

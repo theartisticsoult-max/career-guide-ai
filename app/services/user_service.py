@@ -1,7 +1,7 @@
 """User, dashboard and admin data operations."""
 
 from app import db
-from app.services import profile_service
+from app.services import profile_service, recommendation_service, roadmap_service
 
 
 def authenticate_user(username, password):
@@ -23,6 +23,12 @@ def is_admin(user_id):
 
 def get_dashboard_data(user_id):
     """Assemble everything the dashboard template needs."""
+    chosen = recommendation_service.get_chosen_career(user_id)
+    roadmap = roadmap_service.get_roadmap(user_id) if chosen else None
+    recommendations = recommendation_service.get_recommendations(user_id)
+    next_milestone = next(
+        (item for item in roadmap['items'] if not item['done']), None
+    ) if roadmap else None
     return {
         'user': db.get_user_by_id(user_id),
         'psychometric_results': db.get_psychometric_results(user_id, limit=1),
@@ -30,6 +36,12 @@ def get_dashboard_data(user_id):
         'iq_results': db.get_iq_test_results(user_id, limit=1),
         'iq_stats': db.get_iq_test_stats(user_id),
         'needs_profile': profile_service.needs_profile(user_id),
+        'assessed': not recommendations['needs_assessment'],
+        'recommendation_count': len(recommendations['items']),
+        'top_recommendations': recommendations['items'][:3],
+        'chosen': chosen,
+        'roadmap': roadmap,
+        'next_milestone': next_milestone,
     }
 
 

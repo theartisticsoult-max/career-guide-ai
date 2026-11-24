@@ -170,6 +170,8 @@ class Profile(BaseModel):
     stream = sqlalchemy.Column(sqlalchemy.String)
     interests_text = sqlalchemy.Column(sqlalchemy.Text)
     city = sqlalchemy.Column(sqlalchemy.String)
+    country = sqlalchemy.Column(sqlalchemy.String)
+    region = sqlalchemy.Column(sqlalchemy.String)
     created_at = sqlalchemy.Column(sqlalchemy.TIMESTAMP, server_default=func.current_timestamp())
     updated_at = sqlalchemy.Column(
         sqlalchemy.TIMESTAMP, server_default=func.current_timestamp(),

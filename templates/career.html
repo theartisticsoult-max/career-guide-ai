@@ -131,6 +131,17 @@
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
+                    {% if session.user_id %}
+                    <form action="{{ url_for('main.choose_career_direct', career_id=career.Career_ID) }}" method="POST" class="choose-career-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="check-circle"></i>
+                            Choose This Career
+                        </button>
+                    </form>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log in to Choose This Career</a>
+                    {% endif %}
                     <button class="btn btn-outline" id="compareBtn" data-career-id="{{ career.Career_ID }}">
                         <i data-feather="git-compare"></i>
                         Compare

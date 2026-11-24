@@ -37,6 +37,21 @@ def all_categories():
     return render_template('categories.html', categories=career_data.get_categories())
 
 
+@main_bp.route('/discover')
+def discover():
+    """Path A entry point: search by name or browse by industry."""
+    if not career_data.is_loaded():
+        return "Error loading data", 500
+    query = request.args.get('q', '').strip()
+    results = career_data.search_careers(query) if len(query) >= 2 else []
+    return render_template(
+        'discover.html',
+        categories=career_data.get_categories(),
+        query=query,
+        results=results,
+    )
+
+
 @main_bp.route('/category/<category>')
 def category_page(category):
     """Category page - Public access"""
@@ -152,6 +167,18 @@ def choose_recommendation():
     return redirect(url_for('main.recommendations'))
 
 
+@main_bp.route('/career/<career_id>/choose', methods=['POST'])
+@login_required
+def choose_career_direct(career_id):
+    """Path A: choose a career directly, without taking an assessment."""
+    result = recommendation_service.choose_career_direct(session['user_id'], career_id)
+    if result['success']:
+        flash('Career saved! Your personal roadmap is ready.', 'success')
+        return redirect(url_for('main.roadmap'))
+    flash(result['error'], 'error')
+    return redirect(url_for('main.career_detail', career_id=career_id))
+
+
 @main_bp.route('/roadmap', methods=['GET', 'POST'])
 @login_required
 def roadmap():
@@ -250,6 +277,8 @@ def profile():
             stream=request.form.get('stream', '').strip(),
             interests_text=request.form.get('interests_text', '').strip(),
             city=request.form.get('city', '').strip(),
+            country=request.form.get('country', '').strip()[:60],
+            region=request.form.get('region', '').strip()[:60],
         )
         if not result['success']:
             flash(result['error'], 'error')

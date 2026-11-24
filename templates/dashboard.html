@@ -8,157 +8,90 @@
     <div class="container">
         <div class="dashboard-header">
             <h1>Welcome, {{ user.full_name or user.username }}!</h1>
-            <p>Track your career journey and access your assessment results</p>
+            <p>Choose a career you know, or discover careers that fit you.</p>
         </div>
 
         {% if needs_profile %}
         <div class="dashboard-card">
             <p>Complete your profile once to get better career suggestions.</p>
-            <a href="/profile" class="btn btn-primary btn-small">Fill in your profile</a>
+            <a href="{{ url_for('main.profile') }}" class="btn btn-primary btn-small">Fill in your profile</a>
         </div>
         {% endif %}
 
-        <div class="dashboard-card">
-            <p>Review the careers ranked from your assessment and profile.</p>
-            <a href="{{ url_for('main.recommendations') }}" class="btn btn-primary btn-small">View recommendations</a>
-        </div>
-        
-        <div class="dashboard-stats">
-            <div class="stat-card">
-                <i data-feather="brain"></i>
-                <div class="stat-info">
-                    <h3>Psychometric Tests</h3>
-                    <p>{{ psychometric_results|length }} completed</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <i data-feather="help-circle"></i>
-                <div class="stat-info">
-                    <h3>Career Quizzes</h3>
-                    <p>{{ quiz_results|length }} completed</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <i data-feather="bookmark"></i>
-                <div class="stat-info">
-                    <h3>Saved Careers</h3>
-                    <p id="savedCount">0</p>
-                </div>
-            </div>
-        </div>
-        
         <div class="dashboard-grid">
             <div class="dashboard-card">
-                <h2><i data-feather="brain"></i> Psychometric Assessment</h2>
-                {% if psychometric_results %}
-                    <div class="result-preview">
-                        <p>Last test: {{ psychometric_results[0].test_date[:10] }}</p>
-                        <a href="/psychometric-results" class="btn btn-small">View Latest Results</a>
-                    </div>
-                {% else %}
-                    <p>You haven't taken the psychometric test yet.</p>
-                    <a href="/psychometric-test" class="btn btn-primary">Take Test Now</a>
-                {% endif %}
+                <h2><i data-feather="target"></i> I Know What I Want</h2>
+                <p>Browse careers, compare options, and choose one to build your roadmap.</p>
+                <a href="{{ url_for('main.discover') }}" class="btn btn-primary">Explore Careers</a>
             </div>
-            
+
             <div class="dashboard-card">
-                <h2><i data-feather="help-circle"></i> Career Quiz</h2>
-                {% if quiz_results %}
-                    <div class="result-preview">
-                        <p>Last quiz: {{ quiz_results[0].test_date[:10] }}</p>
-                        <a href="/results" class="btn btn-small">View Latest Results</a>
-                    </div>
-                {% else %}
-                    <p>You haven't taken the career quiz yet.</p>
-                    <a href="/quiz" class="btn btn-primary">Take Quiz Now</a>
-                {% endif %}
+                <h2><i data-feather="compass"></i> Help Me Discover My Career</h2>
+                <p>Answer 12 short questions to see careers worth exploring.</p>
+                <a href="{{ url_for('main.assessment') }}" class="btn btn-primary">Start Discovery</a>
             </div>
-
-
-            <!-- Add to dashboard.html or create a new page -->
-<div class="dashboard-card">
-    <h2><i data-feather="brain"></i> IQ Test History</h2>
-    {% if iq_results %}
-        <div class="iq-history">
-            <p>Your latest IQ score: <strong>{{ iq_results[0].iq_score }}</strong></p>
-            <p>Best score: <strong>{{ iq_stats.highest_score if iq_stats else 'N/A' }}</strong></p>
-            <p>Tests taken: <strong>{{ iq_stats.total_tests if iq_stats else 0 }}</strong></p>
         </div>
-        <a href="/iq-test-results" class="btn btn-small">View Full Results</a>
-    {% else %}
-        <p>You haven't taken the IQ test yet.</p>
-        <a href="/iq-test" class="btn btn-primary">Take IQ Test</a>
-    {% endif %}
-</div>
 
-            <!-- Add to dashboard.html -->
-<div class="dashboard-card">
-    <h2><i data-feather="brain"></i> IQ Test</h2>
-    <p>Assess your cognitive abilities across 5 domains</p>
-    <a href="/iq-test" class="btn btn-primary">Take IQ Test</a>
-</div>
-            
-            <div class="dashboard-card">
-                <h2><i data-feather="message-circle"></i> AI Assistant</h2>
-                <p>Get instant answers to your career questions</p>
-                <a href="/chatbot" class="btn btn-outline">Chat Now</a>
-            </div>
-            
-            
-        </div>
-        
         <div class="dashboard-card full-width">
-            <h2><i data-feather="trending-up"></i> Recommended Next Steps</h2>
+            <h2><i data-feather="trending-up"></i> Your Journey</h2>
+            {% if chosen %}
+                <div class="result-preview">
+                    <p>Selected career: <strong>{{ chosen.Career_Name }}</strong> ({{ chosen.Category }})</p>
+                    {% if roadmap %}
+                        <p>Roadmap progress: {{ roadmap.progress }}% ({{ roadmap.done_count }} of {{ roadmap['items']|length }} steps)</p>
+                        {% if next_milestone %}<p>Next milestone: {{ next_milestone.title }}</p>{% endif %}
+                    {% endif %}
+                    <a href="{{ url_for('main.roadmap') }}" class="btn btn-small">View My Roadmap</a>
+                </div>
+            {% elif assessed %}
+                <div class="result-preview">
+                    <p>{{ recommendation_count }} careers matched to your answers and profile.</p>
+                    {% for rec in top_recommendations %}
+                        <p>{{ rec.Career_Name }} — {{ rec.Category }}</p>
+                    {% endfor %}
+                    <a href="{{ url_for('main.recommendations') }}" class="btn btn-small">View Recommendations</a>
+                </div>
+            {% else %}
+                <p>No career selected yet. Start with one of the paths above.</p>
+            {% endif %}
+            <p><a href="{{ url_for('main.chatbot') }}">Ask the AI Career Mentor →</a></p>
+        </div>
+
+        <div class="dashboard-card full-width">
+            <h2><i data-feather="check-circle"></i> Next Steps</h2>
             <div class="steps-list">
-                {% if not psychometric_results %}
+                {% if not assessed %}
                 <div class="step-item">
                     <span class="step-number">1</span>
                     <div class="step-content">
-                        <h3>Take Psychometric Test</h3>
-                        <p>Understand your personality, interests, and aptitudes</p>
-                        <a href="/psychometric-test">Start →</a>
+                        <h3>Discover your options</h3>
+                        <p>Answer 12 short questions, or browse careers directly.</p>
+                        <a href="{{ url_for('main.assessment') }}">Start →</a>
                     </div>
                 </div>
                 {% endif %}
-                
-                {% if not quiz_results %}
+                {% if not chosen %}
                 <div class="step-item">
                     <span class="step-number">2</span>
                     <div class="step-content">
-                        <h3>Take Career Quiz</h3>
-                        <p>Get quick career recommendations</p>
-                        <a href="/quiz">Start →</a>
+                        <h3>Choose a career</h3>
+                        <p>Pick a career to unlock a step-by-step roadmap.</p>
+                        <a href="{{ url_for('main.discover') }}">Choose →</a>
                     </div>
                 </div>
                 {% endif %}
-                
                 <div class="step-item">
                     <span class="step-number">3</span>
                     <div class="step-content">
-                        <h3>Explore Career Categories</h3>
-                        <p>Browse careers by industry and domain</p>
-                        <a href="/categories">Explore →</a>
-                    </div>
-                </div>
-                
-                <div class="step-item">
-                    <span class="step-number">4</span>
-                    <div class="step-content">
-                        <h3>Chat with AI Assistant</h3>
-                        <p>Ask questions about specific careers</p>
-                        <a href="/chatbot">Chat →</a>
+                        <h3>Grow with your roadmap</h3>
+                        <p>Work through milestones and ask the mentor when you need help.</p>
+                        <a href="{{ url_for('main.chatbot') }}">Chat →</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-// Load saved careers count
-const savedCareers = JSON.parse(localStorage.getItem('savedCareers') || '[]');
-document.getElementById('savedCount').textContent = savedCareers.length;
-</script>
 
 <style>
 .dashboard-page {

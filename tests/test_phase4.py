@@ -163,7 +163,7 @@ class TestProfileFlow(Phase4TestCase):
 class TestMigration(Phase4TestCase):
     def test_phase4_migration_revision_exists(self):
         versions = list((ROOT / 'migrations' / 'versions').glob('*.py'))
-        self.assertEqual(len(versions), 2)
+        self.assertEqual(len(versions), 3)
         contents = ''.join(path.read_text(encoding='utf-8') for path in versions)
         for table in ('profiles', 'assessments', 'roadmap_items', 'chat_messages'):
             self.assertIn(f"'{table}'", contents)

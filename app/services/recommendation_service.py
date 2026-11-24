@@ -337,6 +337,20 @@ def choose_career(user_id, career_id):
     if career_id not in allowed:
         return {'success': False, 'error': 'Choose a career from your recommendations.'}
 
+    return _store_chosen_career(user_id, career_id)
+
+
+def choose_career_direct(user_id, career_id):
+    """Store a career chosen directly from browsing, with no assessment."""
+    career_id = _as_text(career_id).strip()
+    if not career_id:
+        return {'success': False, 'error': 'Please choose a career.'}
+    if career_data.get_career(career_id) is None:
+        return {'success': False, 'error': 'That career is not available.'}
+    return _store_chosen_career(user_id, career_id)
+
+
+def _store_chosen_career(user_id, career_id):
     ChosenCareer.query.filter_by(user_id=user_id).delete()
     sqlalchemy.session.add(ChosenCareer(user_id=user_id, career_id=career_id))
     sqlalchemy.session.commit()
