@@ -8,6 +8,21 @@
         <div class="results-header">
             <h1>Your Career Roadmap</h1>
             <p>{{ roadmap_data.career.Career_Name }} ({{ roadmap_data.career.Category }})</p>
+            <p><a href="{{ url_for('main.discover') }}" class="btn btn-small btn-outline">Change career</a></p>
+        </div>
+
+        <div class="info-card">
+            <h3><i data-feather="briefcase"></i> Career overview</h3>
+            <p><strong>Qualifications:</strong> {{ roadmap_data.career.Required_Degree or 'Varies by route' }}</p>
+            <p><strong>Entry route:</strong> {{ roadmap_data.career.Entrance_Exams or 'Check the usual entry route' }}</p>
+            <p><strong>Possible pathway:</strong> {{ roadmap_data.career.pathway or 'Study, build skills, gain experience, then apply.' }}</p>
+            <p><strong>Registration note:</strong> {{ roadmap_data.career.licensing_note or 'Verify local rules.' }}</p>
+            {% if roadmap_data.skills %}
+            <p><strong>Skills to build:</strong>
+                {% for skill in roadmap_data.skills %}<span class="skill-tag">{{ skill }}</span>{% endfor %}
+            </p>
+            {% endif %}
+            <p><strong>Resources:</strong> Use the <a href="{{ url_for('main.resources') }}">Learning Resources</a> page, official syllabuses and trusted open material.</p>
         </div>
 
         <div class="info-card">
@@ -16,6 +31,11 @@
                 <div class="progress-bar" style="width: {{ roadmap_data.progress }}%"></div>
             </div>
             <p>{{ roadmap_data.done_count }} of {{ roadmap_data['items']|length }} steps complete ({{ roadmap_data.progress }}%)</p>
+            {% if roadmap_data.next_milestone %}
+            <p><strong>Resume with:</strong> {{ roadmap_data.next_milestone.title }}</p>
+            {% else %}
+            <p><strong>All steps complete.</strong> You can change your career above if you want a new path.</p>
+            {% endif %}
         </div>
 
         {% for item in roadmap_data['items'] %}

@@ -13,6 +13,7 @@ from app.services import (
     discovery_service,
     profile_service,
     recommendation_service,
+    roadmap_service,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -208,6 +209,46 @@ class NewJourneysTestCase(unittest.TestCase):
             self.assertIn('Country: India', context)
             self.assertIn('State/region: Maharashtra', context)
             self.assertNotIn('% match', context)
+
+    def test_roadmap_is_actionable_and_can_change_career(self):
+        user = self._new_user('roadmap_journey_user')
+        with app.app_context(), patch(
+            'app.services.chatbot_service.call_groq_completion', return_value=None
+        ):
+            careers = career_data.get_all_careers()
+            first = next(c for c in careers if c['Category'] == 'Healthcare')
+            second = next(c for c in careers if c['Category'] == 'Arts')
+
+            recommendation_service.choose_career_direct(user['id'], first['Career_ID'])
+            roadmap = roadmap_service.get_roadmap(user['id'])
+            self.assertEqual(len(roadmap['items']), 6)
+            phases = ' '.join(item['phase'] for item in roadmap['items'])
+            self.assertIn('Weeks', phases)
+            self.assertIn('Month', phases)
+            details = ' '.join(item['detail'] for item in roadmap['items']).lower()
+            for expected in ('portfolio', 'internship', 'resume', 'interview',
+                             'certification', 'resources'):
+                self.assertIn(expected, details)
+            self.assertTrue(roadmap['next_milestone'])
+
+            first_item = roadmap['items'][0]['id']
+            roadmap_service.toggle_item(user['id'], first_item)
+            resumed = roadmap_service.get_roadmap(user['id'])
+            self.assertEqual(resumed['done_count'], 1)
+            self.assertNotEqual(resumed['next_milestone']['id'], first_item)
+
+            recommendation_service.choose_career_direct(user['id'], second['Career_ID'])
+            changed = roadmap_service.get_roadmap(user['id'])
+            self.assertEqual(changed['career']['career_id'], second['Career_ID'])
+            self.assertNotEqual(changed['roadmap_id'], roadmap['roadmap_id'])
+            self.assertEqual(changed['progress'], 0)
+
+        with patch('app.services.chatbot_service.call_groq_completion', return_value=None):
+            html = self.client.get('/roadmap').data.decode('utf-8', 'replace')
+        self.assertIn('Career overview', html)
+        self.assertIn('Change career', html)
+        self.assertIn('Resume with', html)
+        self.assertIn('Learning Resources', html)
 
 
 if __name__ == '__main__':

@@ -12,12 +12,14 @@ from app.models import Roadmap, RoadmapItem
 from app.services import career_data, chatbot_service, recommendation_service
 from app.services.llm_response import parse_roadmap
 
-ROADMAP_SYSTEM_PROMPT = """You write practical career roadmaps for students.
-Use only the career facts supplied by the application. Do not invent salaries,
-rankings or admission guarantees.
+ROADMAP_SYSTEM_PROMPT = """You write practical career roadmaps for students and career changers.
+Use only the career facts supplied by the application. Do not name specific
+courses, institutes, certifications, employers or qualifications. Do not invent
+salaries, rankings, admission guarantees or other statistics. Cover short and
+long milestones and use weekly or monthly phases where helpful.
 
 Respond with a single valid JSON object and no other text:
-{"roadmap": [{"phase": "...", "type": "skill|course|project|certification|exam", "title": "...", "detail": "...", "est_weeks": 4}]}
+{"roadmap": [{"phase": "Weeks 1-2", "type": "skill|course|project|certification|exam", "title": "...", "detail": "...", "est_weeks": 4}]}
 Return 3-12 items. Use only the listed types. Keep each detail under 1000 characters.
 """
 
@@ -39,54 +41,81 @@ def build_fallback(career):
     name = _as_text(career.get('Career_Name')) or 'this career'
     skills = _split_list(career.get('Key_Technical_Skills'))
     soft_skills = _split_list(career.get('Key_Soft_Skills'))
-    degree = _as_text(career.get('Required_Degree')) or 'a relevant degree'
-    exams = _as_text(career.get('Entrance_Exams')) or 'the relevant admission process'
+    degree = _as_text(career.get('Required_Degree')) or 'the relevant qualification'
+    exams = _as_text(career.get('Entrance_Exams')) or 'the relevant entry route'
     duration = _as_text(career.get('Duration_Years')) or '3-4'
+    pathway = _as_text(career.get('pathway')) or (
+        'Study the fundamentals, build skills, gain practical experience, then apply.'
+    )
+    licensing = _as_text(career.get('licensing_note')) or (
+        'Verify local rules before committing to this path.'
+    )
     first_skill = skills[0] if skills else 'the core fundamentals of this field'
+    skill_text = ', '.join(skills[:4]) if skills else first_skill
+    soft_text = ', '.join(soft_skills[:3]) if soft_skills else 'communication and teamwork'
 
     return [
         {
-            'phase': 'Phase 1: Foundations',
+            'phase': 'Weeks 1-2 · short milestone',
             'type': 'skill',
-            'title': 'Understand the career path',
-            'detail': f'Learn what {name} professionals do day to day and which subjects matter most.',
+            'title': 'Understand this career path',
+            'detail': (
+                f'Read the {name} overview, compare it with your interests, and note the '
+                f'usual route: {pathway}.'
+            ),
             'est_weeks': 2,
         },
         {
-            'phase': 'Phase 1: Foundations',
+            'phase': 'Weeks 3-4 · short milestone',
             'type': 'course',
-            'title': 'Study the required fundamentals',
-            'detail': f'Build the foundation expected for {degree}. This path usually takes about {duration} years of formal study.',
-            'est_weeks': 8,
+            'title': 'Check qualifications and eligibility',
+            'detail': (
+                f'Review the expected qualification ({degree}), entry route ({exams}), '
+                f'and typical study time (about {duration} years). {licensing}'
+            ),
+            'est_weeks': 2,
         },
         {
-            'phase': 'Phase 2: Core Skills',
+            'phase': 'Month 1 · short milestone',
             'type': 'skill',
-            'title': 'Practise key technical skills',
-            'detail': 'Focus on ' + (', '.join(skills[:4]) if skills else first_skill) + '.',
-            'est_weeks': 12,
+            'title': 'Build core skills with free resources',
+            'detail': (
+                f'Start with {skill_text}. Use the Learning Resources page, official '
+                'syllabuses or trusted open material; develop ' + soft_text + ' alongside.'
+            ),
+            'est_weeks': 4,
         },
         {
-            'phase': 'Phase 2: Core Skills',
+            'phase': 'Month 2 · short milestone',
             'type': 'project',
-            'title': 'Create a portfolio project',
-            'detail': f'Apply {first_skill} in a small project you can show to mentors or employers.',
-            'est_weeks': 8,
+            'title': 'Create one portfolio project',
+            'detail': (
+                f'Apply {first_skill} in a small piece of work and add it to a simple '
+                'portfolio. Write a short note explaining the problem, your steps and '
+                'what you learned.'
+            ),
+            'est_weeks': 4,
         },
         {
-            'phase': 'Phase 3: Preparation',
-            'type': 'exam',
-            'title': 'Prepare for entry requirements',
-            'detail': f'Research {exams} and plan the eligibility steps for {name}.',
-            'est_weeks': 6,
+            'phase': 'Month 3 · short milestone',
+            'type': 'project',
+            'title': 'Gain practical experience',
+            'detail': (
+                'Look for an internship, volunteer role, job shadow or local practical '
+                'experience related to this field. Keep a record of tasks and outcomes.'
+            ),
+            'est_weeks': 4,
         },
         {
-            'phase': 'Phase 3: Preparation',
+            'phase': 'Months 4-6 · long milestone',
             'type': 'certification',
-            'title': 'Strengthen your profile',
-            'detail': 'Earn a recognised certification or short course, and develop ' +
-                      (', '.join(soft_skills[:2]) if soft_skills else 'communication and teamwork') + '.',
-            'est_weeks': 6,
+            'title': 'Prepare for entry and interview',
+            'detail': (
+                'Choose a recognised short course or certification only after checking local '
+                'requirements. Update your resume with skills and projects, then practise '
+                'simple interview answers and apply for suitable entry roles.'
+            ),
+            'est_weeks': 12,
         },
     ]
 
@@ -101,7 +130,10 @@ def generate_items(career):
         'Education: ' + _as_text(career.get('Required_Degree')) + '\n'
         'Entrance or entry route: ' + _as_text(career.get('Entrance_Exams')) + '\n'
         'Key skills: ' + _as_text(career.get('Key_Technical_Skills')) + '\n'
+        'Soft skills: ' + _as_text(career.get('Key_Soft_Skills')) + '\n'
         'Duration in years: ' + _as_text(career.get('Duration_Years')) + '\n'
+        'Pathway: ' + _as_text(career.get('pathway')) + '\n'
+        'Licensing note: ' + _as_text(career.get('licensing_note')) + '\n'
     )
     raw = chatbot_service.call_groq_completion(
         prompt, ROADMAP_SYSTEM_PROMPT, max_tokens=1800
@@ -122,12 +154,12 @@ def get_roadmap(user_id):
         return {'needs_career': True, 'items': [], 'progress': 0}
 
     career_id = chosen['career_id']
+    career = career_data.get_career(career_id) or {}
     roadmap = Roadmap.query.filter_by(
         user_id=user_id, career_id=career_id
     ).order_by(Roadmap.version.desc()).first()
 
     if roadmap is None:
-        career = career_data.get_career(career_id) or {}
         roadmap = Roadmap(user_id=user_id, career_id=career_id, version=1)
         sqlalchemy.session.add(roadmap)
         sqlalchemy.session.flush()
@@ -140,11 +172,15 @@ def get_roadmap(user_id):
     ).order_by(RoadmapItem.id).all()]
     done = sum(1 for item in items if item['done'])
     progress = round(done / len(items) * 100) if items else 0
+    next_milestone = next((item for item in items if not item['done']), None)
     return {
         'needs_career': False,
         'roadmap_id': roadmap.id,
-        'career': chosen,
+        'career': {**career, **chosen},
+        'skills': _split_list(career.get('Key_Technical_Skills')) +
+                  _split_list(career.get('Key_Soft_Skills')),
         'items': items,
+        'next_milestone': next_milestone,
         'done_count': done,
         'progress': progress,
     }
