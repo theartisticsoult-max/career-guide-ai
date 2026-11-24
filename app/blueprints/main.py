@@ -7,6 +7,7 @@ from app.services import (
     career_data,
     profile_service,
     recommendation_service,
+    roadmap_service,
     user_service,
 )
 from data.assessment_questions import (
@@ -149,6 +150,24 @@ def choose_recommendation():
     else:
         flash(result['error'], 'error')
     return redirect(url_for('main.recommendations'))
+
+
+@main_bp.route('/roadmap', methods=['GET', 'POST'])
+@login_required
+def roadmap():
+    """View the chosen career's roadmap and update item progress."""
+    user_id = session['user_id']
+    if request.method == 'POST':
+        result = roadmap_service.toggle_item(user_id, request.form.get('item_id', ''))
+        flash('Step updated.' if result['success'] else result['error'],
+              'success' if result['success'] else 'error')
+        return redirect(url_for('main.roadmap'))
+
+    data = roadmap_service.get_roadmap(user_id)
+    if data['needs_career']:
+        flash('Choose a career first to build your roadmap.', 'error')
+        return redirect(url_for('main.recommendations'))
+    return render_template('roadmap.html', roadmap_data=data)
 
 
 @main_bp.route('/quiz')

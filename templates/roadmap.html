@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Your Roadmap - CareerGuide AI{% endblock %}
+
+{% block content %}
+<section class="results-section">
+    <div class="container">
+        <div class="results-header">
+            <h1>Your Career Roadmap</h1>
+            <p>{{ roadmap_data.career.Career_Name }} ({{ roadmap_data.career.Category }})</p>
+        </div>
+
+        <div class="info-card">
+            <h3><i data-feather="trending-up"></i> Progress</h3>
+            <div class="quiz-progress">
+                <div class="progress-bar" style="width: {{ roadmap_data.progress }}%"></div>
+            </div>
+            <p>{{ roadmap_data.done_count }} of {{ roadmap_data['items']|length }} steps complete ({{ roadmap_data.progress }}%)</p>
+        </div>
+
+        {% for item in roadmap_data['items'] %}
+        <div class="info-card">
+            <h3>{{ loop.index }}. {{ item.title }}</h3>
+            <p>
+                <span class="career-badge">{{ item.phase }}</span>
+                <span class="career-badge">{{ item.type|title }}</span>
+            </p>
+            <p>{{ item.detail }}</p>
+            {% if item.est_weeks %}<p><strong>Estimated time:</strong> {{ item.est_weeks }} weeks</p>{% endif %}
+            {% if item.done %}<p><strong>Completed</strong></p>{% endif %}
+
+            <form method="POST" action="{{ url_for('main.roadmap') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <button type="submit" class="btn btn-small {% if item.done %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                    {{ 'Mark as not done' if item.done else 'Mark as done' }}
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
