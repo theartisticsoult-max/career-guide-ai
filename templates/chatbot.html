@@ -197,16 +197,17 @@ class ModernChatbot {
     }
     
     init() {
-        this.loadConversation();
         this.attachEventListeners();
         this.autoResizeTextarea();
-        
-        if (this.conversationHistory.length === 0) {
-            this.showWelcomeScreen();
-        } else {
-            this.hideWelcomeScreen();
-            this.renderMessages();
-        }
+
+        this.loadConversation().then(() => {
+            if (this.conversationHistory.length === 0) {
+                this.showWelcomeScreen();
+            } else {
+                this.hideWelcomeScreen();
+                this.renderMessages();
+            }
+        });
     }
     
     attachEventListeners() {
@@ -470,17 +471,22 @@ class ModernChatbot {
         }
     }
     
-    clearConversation() {
+    async clearConversation() {
         if (confirm('Are you sure you want to clear this conversation?')) {
+            try {
+                await fetch('/api/chatbot/clear', { method: 'POST' });
+            } catch (error) {
+                console.error('Could not clear saved conversation:', error);
+            }
             this.conversationHistory = [];
             if (this.messagesContainer) this.messagesContainer.innerHTML = '';
-            this.saveConversation();
+            localStorage.removeItem('modernChatbotHistory');
             this.showWelcomeScreen();
         }
     }
     
-    newChat() {
-        this.clearConversation();
+    async newChat() {
+        await this.clearConversation();
     }
     
     renderMessages() {
@@ -498,14 +504,29 @@ class ModernChatbot {
         localStorage.setItem('modernChatbotHistory', JSON.stringify(toSave));
     }
     
-    loadConversation() {
+    async loadConversation() {
+        try {
+            const response = await fetch('/api/chatbot/history');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.logged_in) {
+                    this.conversationHistory = (data.messages || []).map(item => ({
+                        role: item.role,
+                        content: item.message,
+                        time: ''
+                    }));
+                    localStorage.removeItem('modernChatbotHistory');
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading saved conversation:', error);
+        }
+
         const saved = localStorage.getItem('modernChatbotHistory');
         if (saved) {
             try {
                 this.conversationHistory = JSON.parse(saved);
-                if (this.conversationHistory.length > 0) {
-                    this.hideWelcomeScreen();
-                }
             } catch(e) {
                 console.error('Error loading conversation:', e);
             }

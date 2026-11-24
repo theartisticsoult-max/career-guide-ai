@@ -3,7 +3,7 @@ from flask import Blueprint, current_app, jsonify, request, session
 
 from app import limiter
 from app.blueprints.auth import login_required
-from app.services import career_data, chatbot_service
+from app.services import career_data, chat_service
 from app.services.iq_service import submit_iq_test
 from app.services.psychometric_service import submit_psychometric
 from app.services.quiz_service import submit_quiz
@@ -44,13 +44,33 @@ def api_chatbot():
         if not message:
             return jsonify({'response': "Please enter a question or message."}), 400
 
-        response = chatbot_service.get_chatbot_response(
-            message, history=history, career_df=career_data.career_df
-        )
+        response = chat_service.respond(session.get('user_id'), message, history)
         return jsonify({'response': response})
     except Exception:
         current_app.logger.exception('Chatbot error')
         return jsonify({'response': "I'm having trouble processing your request. Please try again later."}), 500
+
+
+@api_bp.route('/api/chatbot/history')
+def api_chatbot_history():
+    """Return stored chat messages for the logged-in user."""
+    user_id = session.get('user_id')
+    return jsonify({
+        'logged_in': bool(user_id),
+        'messages': chat_service.get_display_history(user_id),
+    })
+
+
+@api_bp.route('/api/chatbot/clear', methods=['POST'])
+@login_required
+def api_chatbot_clear():
+    """Clear the logged-in user's stored conversation."""
+    try:
+        chat_service.clear_history(session['user_id'])
+        return jsonify({'success': True})
+    except Exception:
+        current_app.logger.exception('Chatbot clear error')
+        return jsonify({'success': False}), 500
 
 
 @api_bp.route('/api/all-careers')
