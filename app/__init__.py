@@ -34,10 +34,20 @@ app = Flask(
 app.config['SECRET_KEY'] = secret_key
 app.config['DEBUG'] = FLASK_DEBUG
 
+from app.extensions import migrate, sqlalchemy  # noqa: E402
+from app.services.database_config import build_database_uri  # noqa: E402
+
+app.config['SQLALCHEMY_DATABASE_URI'] = build_database_uri()
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+sqlalchemy.init_app(app)
+migrate.init_app(app, sqlalchemy)
+
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
-from app.models import db  # noqa: E402
+from app.models import Database  # noqa: E402
+
+db = Database(app=app)
 
 
 @app.template_filter('from_json')

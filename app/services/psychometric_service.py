@@ -1,6 +1,6 @@
 """Psychometric submission: code ranks, the report is written from templates."""
 
-from app.models import db
+from app import db
 from app.services.ai_summary import AISummaryGenerator
 from app.services.psychometric import get_career_matches_from_psychometric
 

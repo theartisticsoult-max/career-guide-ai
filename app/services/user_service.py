@@ -1,6 +1,6 @@
 """User, dashboard and admin data operations."""
 
-from app.models import db
+from app import db
 
 
 def authenticate_user(username, password):

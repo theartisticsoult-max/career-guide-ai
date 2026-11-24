@@ -1,6 +1,6 @@
 """IQ test submission and non-LLM analysis."""
 
-from app.models import db
+from app import db
 from app.services.iq_test import generate_iq_summary
 
 

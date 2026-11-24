@@ -4,7 +4,6 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -12,7 +11,6 @@ from unittest.mock import patch
 from werkzeug.security import check_password_hash
 
 from app import app, db, limiter
-from app.models import Database
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / 'templates'
@@ -38,26 +36,33 @@ class SecurityTestCase(unittest.TestCase):
 
 
 class TestAdminBootstrap(SecurityTestCase):
-    def test_admin_created_only_from_complete_env(self):
-        with tempfile.TemporaryDirectory() as directory:
-            with patch.dict(os.environ, {}, clear=True):
-                empty = Database(os.path.join(directory, 'empty.db'))
-                conn = empty.get_connection()
-                count = conn.execute('SELECT COUNT(*) FROM users WHERE is_admin = 1').fetchone()[0]
-                conn.close()
-                self.assertEqual(count, 0)
+    def _clear_admins(self):
+        conn = db.get_connection()
+        conn.execute('DELETE FROM users WHERE is_admin = 1')
+        conn.commit()
+        conn.close()
 
-            with patch.dict(os.environ, {
-                'ADMIN_USERNAME': 'envadmin',
-                'ADMIN_EMAIL': 'envadmin@example.com',
-                'ADMIN_PASSWORD': 'a-strong-password',
-            }, clear=True):
-                seeded = Database(os.path.join(directory, 'seeded.db'))
-                admin = seeded.get_user_by_username('envadmin')
-                self.assertIsNotNone(admin)
-                self.assertEqual(admin['is_admin'], 1)
-                self.assertNotEqual(admin['password'], hashlib.sha256(b'a-strong-password').hexdigest())
-                self.assertTrue(check_password_hash(admin['password'], 'a-strong-password'))
+    def test_admin_created_only_from_complete_env(self):
+        self._clear_admins()
+        with patch.dict(os.environ, {}, clear=True):
+            db._seed_admin()
+        self.assertEqual(db.get_all_users(admin_only=True), [])
+
+        with patch.dict(os.environ, {
+            'ADMIN_USERNAME': 'envadmin',
+            'ADMIN_EMAIL': 'envadmin@example.com',
+            'ADMIN_PASSWORD': 'a-strong-password',
+        }, clear=True):
+            db._seed_admin()
+            admin = db.get_user_by_username('envadmin')
+            self.assertIsNotNone(admin)
+            self.assertEqual(admin['is_admin'], 1)
+            self.assertNotEqual(admin['password'], hashlib.sha256(b'a-strong-password').hexdigest())
+            self.assertTrue(check_password_hash(admin['password'], 'a-strong-password'))
+            # A second seed must not create another admin.
+            db._seed_admin()
+        self.assertEqual(len(db.get_all_users(admin_only=True)), 1)
+        self._clear_admins()
 
 
 class TestSecretKey(SecurityTestCase):

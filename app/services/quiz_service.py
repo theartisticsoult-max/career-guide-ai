@@ -1,6 +1,6 @@
 """Career quiz submission: code ranks, the summary is written from templates."""
 
-from app.models import db
+from app import db
 from app.services.ai_summary import AISummaryGenerator
 from app.services.career_data import get_recommendations
 
