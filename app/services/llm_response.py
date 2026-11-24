@@ -46,3 +46,39 @@ def parse_explanation(raw):
             return value.strip()
 
     return None
+
+
+def parse_explanation_map(raw, keys, max_length=800):
+    """Return validated ``{key: explanation}`` JSON, or None.
+
+    ``keys`` are supplied by application code (the already-ranked career IDs).
+    The model cannot add, remove or reorder careers; it may only replace the
+    explanation text. Any missing, empty or oversized value falls back.
+    """
+    if not raw or not isinstance(raw, str) or not keys:
+        return None
+
+    text = raw.strip()
+    if text.startswith('```'):
+        text = text.strip('`').strip()
+        if text.lower().startswith('json'):
+            text = text[4:].strip()
+
+    try:
+        payload = json.loads(text)
+    except (ValueError, TypeError):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    result = {}
+    for key in keys:
+        value = payload.get(key)
+        if not isinstance(value, str):
+            return None
+        value = value.strip()
+        if not value or len(value) > max_length:
+            return None
+        result[key] = value
+    return result

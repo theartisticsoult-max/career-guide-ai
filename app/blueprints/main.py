@@ -2,7 +2,13 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.blueprints.auth import login_required
-from app.services import assessment_service, career_data, profile_service, user_service
+from app.services import (
+    assessment_service,
+    career_data,
+    profile_service,
+    recommendation_service,
+    user_service,
+)
 from data.assessment_questions import (
     APTITUDE_QUESTIONS,
     INTEREST_STATEMENTS,
@@ -103,8 +109,8 @@ def assessment():
         if submitted_part == 3:
             combined = assessment_service.get_answers(user_id, state['assessment_id'])
             assessment_service.complete(user_id, state['assessment_id'], combined)
-            flash('Assessment complete!', 'success')
-            return redirect(url_for('main.dashboard'))
+            flash('Assessment complete! Here are your career matches.', 'success')
+            return redirect(url_for('main.recommendations'))
         return redirect(url_for('main.assessment', part=submitted_part + 1))
 
     return render_template(
@@ -114,6 +120,35 @@ def assessment():
         saved=assessment_service.get_answers(user_id, state['assessment_id']),
         progress=int((part - 1) / 3 * 100),
     )
+
+
+@main_bp.route('/recommendations')
+@login_required
+def recommendations():
+    """Show code-ranked careers from the user's latest assessment."""
+    result = recommendation_service.get_recommendations(session['user_id'])
+    if result['needs_assessment']:
+        flash('Complete the assessment first to see your career matches.', 'error')
+        return redirect(url_for('main.assessment'))
+    return render_template(
+        'recommendations.html',
+        recommendations=result['items'],
+        chosen=result['chosen'],
+    )
+
+
+@main_bp.route('/recommendations/choose', methods=['POST'])
+@login_required
+def choose_recommendation():
+    """Record a career chosen from the recommendations list."""
+    result = recommendation_service.choose_career(
+        session['user_id'], request.form.get('career_id', '')
+    )
+    if result['success']:
+        flash('Career saved! You can now build your roadmap.', 'success')
+    else:
+        flash(result['error'], 'error')
+    return redirect(url_for('main.recommendations'))
 
 
 @main_bp.route('/quiz')

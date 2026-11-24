@@ -17,6 +17,11 @@
             <a href="/profile" class="btn btn-primary btn-small">Fill in your profile</a>
         </div>
         {% endif %}
+
+        <div class="dashboard-card">
+            <p>Review the careers ranked from your assessment and profile.</p>
+            <a href="{{ url_for('main.recommendations') }}" class="btn btn-primary btn-small">View recommendations</a>
+        </div>
         
         <div class="dashboard-stats">
             <div class="stat-card">

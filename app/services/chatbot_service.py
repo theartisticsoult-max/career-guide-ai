@@ -47,9 +47,10 @@ def get_groq_client():
         logger.error(f"Failed to initialize Groq client: {e}")
         return None
 
-def build_messages_payload(message: str, history: Optional[List[Dict[str, str]]] = None) -> List[Dict[str, str]]:
-    """Build messages payload with system prompt, sanitized conversation history, and current message."""
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+def build_messages_payload(message: str, history: Optional[List[Dict[str, str]]] = None,
+                           system_prompt: str = SYSTEM_PROMPT) -> List[Dict[str, str]]:
+    """Build messages payload with system prompt, sanitized history, and current message."""
+    messages = [{"role": "system", "content": system_prompt}]
     
     if history and isinstance(history, list):
         # Keep last 8 turns for balanced context and token efficiency
@@ -69,21 +70,23 @@ def build_messages_payload(message: str, history: Optional[List[Dict[str, str]]]
         
     return messages
 
-def call_groq_api(message: str, history: Optional[List[Dict[str, str]]] = None) -> Optional[str]:
-    """Call Groq API with conversation context."""
+def call_groq_completion(message: str, system_prompt: str = SYSTEM_PROMPT,
+                         history: Optional[List[Dict[str, str]]] = None,
+                         max_tokens: int = 1024) -> Optional[str]:
+    """Call Groq with an explicit system prompt and return raw completion text."""
     client = get_groq_client()
     if not client:
         return None
-    
+
     model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL).strip() or DEFAULT_GROQ_MODEL
-    messages = build_messages_payload(message, history)
-    
+    messages = build_messages_payload(message, history, system_prompt)
+
     try:
         completion = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=0.7,
-            max_tokens=1024,
+            max_tokens=max_tokens,
             top_p=0.95
         )
         if completion and completion.choices and len(completion.choices) > 0:
@@ -93,8 +96,13 @@ def call_groq_api(message: str, history: Optional[List[Dict[str, str]]] = None) 
     except Exception as e:
         logger.warning(f"Groq API call failed: {e}. Falling back to domain knowledge base.")
         return None
-    
+
     return None
+
+
+def call_groq_api(message: str, history: Optional[List[Dict[str, str]]] = None) -> Optional[str]:
+    """Call Groq API with the chatbot system prompt and conversation context."""
+    return call_groq_completion(message, SYSTEM_PROMPT, history)
 
 def get_intelligent_fallback_response(message: str, career_df=None) -> str:
     """

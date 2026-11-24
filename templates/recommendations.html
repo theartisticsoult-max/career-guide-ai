@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Your Career Matches - CareerGuide AI{% endblock %}
+
+{% block content %}
+<section class="results-section">
+    <div class="container">
+        <div class="results-header">
+            <h1>Your Career Matches</h1>
+            <p>Ranked from your assessment, profile and preferences</p>
+        </div>
+
+        {% if chosen %}
+        <div class="info-card">
+            <h3><i data-feather="check-circle"></i> Your chosen career</h3>
+            <p><strong>{{ chosen.Career_Name }}</strong> ({{ chosen.Category }})</p>
+        </div>
+        {% endif %}
+
+        <div class="recommendations-grid">
+            {% for rec in recommendations %}
+            <div class="career-card recommendation-card">
+                <div class="career-header">
+                    <h3>#{{ rec.rank }} {{ rec.Career_Name }}</h3>
+                    <span class="match-badge {% if rec.score >= 80 %}high-match{% elif rec.score >= 60 %}medium-match{% else %}low-match{% endif %}">
+                        {{ rec.score|round|int }}% match
+                    </span>
+                </div>
+                <p class="career-category">{{ rec.Category }}</p>
+                <p>{{ rec.why_fits }}</p>
+                <p><strong>Education:</strong> {{ rec.Min_Education or 'Varies' }}</p>
+                <p><strong>Starting salary:</strong> {{ rec.Entry_Salary_LPA or 'Varies' }} LPA</p>
+                <p><strong>Outlook:</strong> {{ rec.Job_Outlook or 'Varies' }}</p>
+
+                <form method="POST" action="{{ url_for('main.choose_recommendation') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="career_id" value="{{ rec.career_id }}">
+                    <button type="submit" class="btn btn-small btn-primary">Choose this career</button>
+                </form>
+                <a href="{{ url_for('main.career_detail', career_id=rec.career_id) }}" class="btn btn-small btn-outline">View details</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
