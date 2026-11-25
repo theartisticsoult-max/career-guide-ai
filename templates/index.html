@@ -13,43 +13,21 @@
             </div>
             <h1 class="hero-title">Discover Your Perfect <span class="gradient-text">Career Path</span></h1>
             <p class="hero-description">
-                AI-powered career guidance tailored to your personality, interests, and skills. 
-                Explore 300+ careers with detailed insights and get personalized recommendations.
+                Explore careers across industries, understand what each path needs, choose one that fits,
+                and grow with a personalized roadmap and guidance from the AI Career Mentor.
             </p>
             
             <div class="hero-actions">
-                <a href="/psychometric-test" class="btn btn-primary btn-large">
-                    <i data-feather="brain"></i>
-                    Take Psychometric Test
+                <a href="{{ url_for('main.discover') }}" class="btn btn-primary btn-large">
+                    <i data-feather="compass"></i>
+                    I Know What I Want
                 </a>
-                <a href="/quiz" class="btn btn-secondary btn-large">
+                <a href="{{ url_for('main.discovery') }}" class="btn btn-secondary btn-large">
                     <i data-feather="help-circle"></i>
-                    Quick Career Quiz
-                </a>
-                <a href="/chatbot" class="btn btn-outline btn-large">
-                    <i data-feather="message-circle"></i>
-                    Chat with AI
+                    Help Me Discover
                 </a>
             </div>
-            
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <span class="stat-number">300+</span>
-                    <span class="stat-label">Careers</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">20+</span>
-                    <span class="stat-label">Categories</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">98%</span>
-                    <span class="stat-label">Match Accuracy</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">50K+</span>
-                    <span class="stat-label">Students Guided</span>
-                </div>
-            </div>
+
         </div>
     </div>
     
@@ -66,44 +44,26 @@
     <div class="container">
         <div class="section-header">
             <h2>Why Choose CareerGuide AI?</h2>
-            <p>Comprehensive tools to help you make informed career decisions</p>
+            <p>Practical tools to explore, decide and grow at your own pace.</p>
         </div>
         
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">
-                    <i data-feather="brain"></i>
-                </div>
-                <h3>Psychometric Assessment</h3>
-                <p>60-question comprehensive test analyzing personality, interests, aptitudes, work style, and values.</p>
-                <a href="/psychometric-test" class="feature-link">Take Test →</a>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i data-feather="bar-chart-2"></i>
-                </div>
-                <h3>AI Career Matching</h3>
-                <p>Advanced algorithms match your profile with 300+ careers for personalized recommendations.</p>
-                <a href="/quiz" class="feature-link">Take Quiz →</a>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
                     <i data-feather="message-circle"></i>
                 </div>
-                <h3>AI Career Assistant</h3>
-                <p>24/7 chatbot to answer all your career questions and provide instant guidance.</p>
-                <a href="/chatbot" class="feature-link">Chat Now →</a>
+                <h3>AI Career Mentor</h3>
+                <p>Ask questions anytime and get clear guidance for your next step.</p>
+                <a href="{{ url_for('main.chatbot') }}" class="feature-link">Chat Now →</a>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">
-                    <i data-feather="git-compare"></i>
+                    <i data-feather="columns"></i>
                 </div>
                 <h3>Career Comparison</h3>
-                <p>Compare up to 3 careers side-by-side to make informed decisions.</p>
-                <a href="/compare" class="feature-link">Compare →</a>
+                <p>Compare up to three careers side by side before you choose.</p>
+                <a href="{{ url_for('main.compare') }}" class="feature-link">Compare →</a>
             </div>
         </div>
     </div>
@@ -149,45 +109,45 @@
 <section class="how-it-works">
     <div class="container">
         <div class="section-header">
-            <h2>How It Works</h2>
-            <p>Simple steps to discover your perfect career</p>
+            <h2>Your Career Journey</h2>
+            <p>Discover → Explore → Choose → Grow</p>
         </div>
         
         <div class="steps-grid">
             <div class="step-card">
                 <div class="step-number">1</div>
                 <div class="step-icon">
-                    <i data-feather="edit-3"></i>
+                    <i data-feather="compass"></i>
                 </div>
-                <h3>Take Assessment</h3>
-                <p>Complete our comprehensive psychometric test or quick career quiz</p>
+                <h3>Discover</h3>
+                <p>Explore careers across different industries and backgrounds.</p>
             </div>
             
             <div class="step-card">
                 <div class="step-number">2</div>
                 <div class="step-icon">
-                    <i data-feather="cpu"></i>
+                    <i data-feather="book-open"></i>
                 </div>
-                <h3>AI Analysis</h3>
-                <p>Our AI analyzes your responses and matches with 300+ careers</p>
+                <h3>Explore</h3>
+                <p>Understand qualifications, skills, education and career opportunities.</p>
             </div>
             
             <div class="step-card">
                 <div class="step-number">3</div>
                 <div class="step-icon">
-                    <i data-feather="check-circle"></i>
+                    <i data-feather="target"></i>
                 </div>
-                <h3>Get Matches</h3>
-                <p>Receive personalized career recommendations with match scores</p>
+                <h3>Choose</h3>
+                <p>Select a career directly or use personalized recommendations.</p>
             </div>
             
             <div class="step-card">
                 <div class="step-number">4</div>
                 <div class="step-icon">
-                    <i data-feather="compass"></i>
+                    <i data-feather="trending-up"></i>
                 </div>
-                <h3>Explore & Decide</h3>
-                <p>Explore detailed career information and make informed decisions</p>
+                <h3>Grow</h3>
+                <p>Follow a personalized roadmap with milestones and guidance from the AI Career Mentor.</p>
             </div>
         </div>
     </div>
@@ -204,8 +164,8 @@
         <div class="testimonials-grid">
             <div class="testimonial-card">
                 <div class="testimonial-content">
-                    <i data-feather="quote"></i>
-                    <p>"The psychometric test was incredibly accurate! It recommended careers I never considered before, and after researching them, I found my true calling."</p>
+                    <i data-feather="message-circle"></i>
+                    <p>"Guided discovery helped me see careers I had never considered, and the roadmap showed me how to get there."</p>
                 </div>
                 <div class="testimonial-author">
                     <div class="author-avatar">
@@ -220,7 +180,7 @@
             
             <div class="testimonial-card">
                 <div class="testimonial-content">
-                    <i data-feather="quote"></i>
+                    <i data-feather="message-circle"></i>
                     <p>"The AI chatbot answered all my questions about different careers. The detailed information about salaries and education requirements helped me plan my future."</p>
                 </div>
                 <div class="testimonial-author">
@@ -236,7 +196,7 @@
             
             <div class="testimonial-card">
                 <div class="testimonial-content">
-                    <i data-feather="quote"></i>
+                    <i data-feather="message-circle"></i>
                     <p>"Comparing careers side-by-side helped me make the right decision. The match scores gave me confidence that I'm choosing the right path for my skills and interests."</p>
                 </div>
                 <div class="testimonial-author">
@@ -279,16 +239,16 @@
 <section class="cta-section">
     <div class="container">
         <div class="cta-content">
-            <h2>Ready to Discover Your Perfect Career?</h2>
-            <p>Take our comprehensive psychometric test and get personalized career recommendations today!</p>
+            <h2>Ready to Start Your Career Journey?</h2>
+            <p>Choose a career you already have in mind, or let guided questions find the right paths for you.</p>
             <div class="cta-buttons">
-                <a href="/psychometric-test" class="btn btn-primary btn-large">
-                    <i data-feather="brain"></i>
-                    Start Psychometric Test
+                <a href="{{ url_for('main.discover') }}" class="btn btn-primary btn-large">
+                    <i data-feather="compass"></i>
+                    I Know What I Want
                 </a>
-                <a href="/quiz" class="btn btn-secondary btn-large">
-                    <i data-feather="zap"></i>
-                    Quick Career Quiz
+                <a href="{{ url_for('main.discovery') }}" class="btn btn-secondary btn-large">
+                    <i data-feather="help-circle"></i>
+                    Help Me Discover
                 </a>
             </div>
         </div>
@@ -315,11 +275,11 @@ async function loadCategories() {
             'Government': 'shield',
             'Defence': 'flag',
             'Education': 'book-open',
-            'Law': 'scale',
+            'Law': 'book',
             'Media': 'mic',
-            'Arts': 'palette',
+            'Arts': 'pen-tool',
             'Entertainment': 'film',
-            'Skilled Trades': 'wrench',
+            'Skilled Trades': 'settings',
             'Agriculture': 'sun',
             'Hospitality': 'coffee',
             'Sports': 'award',
@@ -495,29 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 60px;
-}
-
-.hero-stats {
-    display: flex;
-    justify-content: center;
-    gap: 48px;
-    flex-wrap: wrap;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-number {
-    display: block;
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    opacity: 0.8;
 }
 
 .hero-wave {
@@ -1083,14 +1020,6 @@ document.addEventListener('DOMContentLoaded', () => {
     .hero-actions .btn {
         width: 100%;
         justify-content: center;
-    }
-    
-    .hero-stats {
-        gap: 24px;
-    }
-    
-    .stat-number {
-        font-size: 1.5rem;
     }
     
     .features-grid,

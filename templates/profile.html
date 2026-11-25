@@ -3,17 +3,19 @@
 {% block title %}Your Profile - CareerGuide AI{% endblock %}
 
 {% block content %}
-<div class="login-page">
+<div class="login-page profile-page">
     <div class="container">
-        <div class="login-container">
-            <div class="login-card">
-                <div class="login-header">
+        <div class="login-container profile-container">
+            <div class="login-card profile-card">
+                <div class="login-header profile-header">
                     <i data-feather="user"></i>
-                    <h2>Your Profile</h2>
-                    <p>This helps us suggest the right careers for you</p>
+                    <div>
+                        <h2>Your Profile</h2>
+                        <p>This helps us suggest the right careers for you</p>
+                    </div>
                 </div>
 
-                <form method="POST" class="login-form">
+                <form method="POST" class="login-form profile-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="form-group">
@@ -62,4 +64,121 @@
         </div>
     </div>
 </div>
+
+<style>
+.profile-page {
+    padding: 48px 0 80px;
+    background: var(--bg, #F9F7F5);
+}
+
+.profile-container {
+    max-width: 1080px;
+}
+
+.profile-card {
+    padding: 40px 48px;
+    box-shadow: var(--shadow, 0 4px 12px rgba(0,0,0,0.05));
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+    margin-bottom: 32px;
+}
+
+.profile-header i {
+    width: 48px;
+    height: 48px;
+    color: var(--primary, #4A6FA5);
+    flex-shrink: 0;
+}
+
+.profile-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 4px;
+}
+
+.profile-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 32px;
+}
+
+.profile-form .form-group {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.profile-form .form-group:nth-of-type(3) {
+    grid-column: 1 / -1;
+}
+
+.profile-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text, #2D3E50);
+}
+
+.profile-form input,
+.profile-form select,
+.profile-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text, #2D3E50);
+    background: var(--surface, #FFFFFF);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.profile-form textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.profile-form input:focus,
+.profile-form select:focus,
+.profile-form textarea:focus {
+    outline: none;
+    border-color: var(--primary, #4A6FA5);
+    box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+}
+
+.profile-form .btn-block {
+    grid-column: 1 / -1;
+    width: auto;
+    max-width: 240px;
+}
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 32px 0 60px;
+    }
+
+    .profile-card {
+        padding: 24px;
+    }
+
+    .profile-form {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .profile-form .form-group:nth-of-type(3) {
+        grid-column: auto;
+    }
+
+    .profile-form .btn-block {
+        width: 100%;
+        max-width: none;
+    }
+}
+</style>
 {% endblock %}

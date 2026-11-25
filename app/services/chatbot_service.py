@@ -15,7 +15,7 @@ from app.services.llm_response import parse_explanation
 logger = logging.getLogger(__name__)
 
 # Default Groq model - high capability, fast, cost-effective
-DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 
 SYSTEM_PROMPT = """You are the AI Career Mentor for Career Guide AI.
 Use the saved user context supplied by the application. Career ranking, selection,
@@ -26,13 +26,15 @@ Respond with a single valid JSON object and no other text:
 
 Guidelines:
 1. Put the entire Markdown answer in the "answer" field (headers, bullets, bold text).
-2. Give practical, structured guidance: What I know, Next steps, What to check locally, and one clarifying question when information is missing.
-3. Ask a clarifying question about stage, education, location or goal when the answer would otherwise be generic.
-4. Use only career facts supplied in the context. Do not invent courses, institutes, qualifications, licences, jobs, salaries, rankings or statistics.
-5. Do not assume a technology or engineering career. Cover healthcare, arts, commerce, law, education, government, skilled trades and other paths equally.
-6. Refer to saved recommendations and roadmap progress when relevant. Never claim a match percentage.
-7. Be concise and useful. Do not write generic motivational advice.
-8. Maintain awareness of the conversation context and refer back to earlier topics when appropriate.
+2. Give practical, structured guidance. Keep any "What I know" recap to at most two relevant facts; never paste the full saved context.
+3. Answer the latest user message, not only the first question in the conversation.
+4. If the user replies with a short topic such as skills, projects, qualifications or applications after a clarification question, treat it as the selected topic and answer it directly. Never repeat a clarification question the user has already answered.
+5. Ask a clarifying question about stage, education, location or goal only when the answer would otherwise be generic and the fact is not already in the saved context.
+6. Use only career facts supplied in the context. Do not invent courses, institutes, qualifications, licences, jobs, salaries, rankings or statistics.
+7. Do not assume a technology or engineering career. Cover healthcare, arts, commerce, law, education, government, skilled trades and other paths equally.
+8. Refer to saved recommendations and roadmap progress when relevant. Never claim a match percentage.
+9. Be concise and useful. Do not write generic motivational advice.
+10. Maintain awareness of the conversation context and refer back to earlier topics when appropriate.
 """
 
 def get_groq_client():
@@ -316,7 +318,7 @@ def get_intelligent_fallback_response(message: str, career_df=None) -> str:
 def get_chatbot_response(message: str, history: Optional[List[Dict[str, str]]] = None, career_df=None) -> str:
     """
     Main entry point for chatbot response generation:
-    1. Attempts genuinely conversational Groq API integration using supported model (llama-3.3-70b-versatile).
+    1. Attempts genuinely conversational Groq API integration using the configured supported model.
     2. Maintains conversation context across multi-turn exchanges.
     3. Gracefully falls back to domain-informed career intelligence if API key is not configured or unavailable.
     """

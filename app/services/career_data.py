@@ -3,7 +3,9 @@
 All matching/scoring happens here in Python. The language model is never
 responsible for choosing or ordering careers.
 """
+import math
 import os
+from numbers import Real
 
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -17,6 +19,26 @@ CAREER_CSV = os.path.join(PROJECT_ROOT, 'data', 'career.csv')
 career_df = None
 vectorizer = None
 career_vectors = None
+
+
+def _json_safe_value(value):
+    """Return a JSON-safe scalar, mapping missing numeric values to None."""
+    if value is None or value is pd.NA:
+        return None
+    if isinstance(value, Real) and not math.isfinite(value):
+        return None
+    return value
+
+
+def _json_safe_record(record):
+    """Return a career record without non-standard numeric values."""
+    if not isinstance(record, dict):
+        return record
+    return {key: _json_safe_value(value) for key, value in record.items()}
+
+
+def _json_safe_records(records):
+    return [_json_safe_record(record) for record in records]
 
 
 def parse_salary(salary_str):
@@ -88,14 +110,14 @@ def get_career(career_id):
     career = career_df[career_df['Career_ID'] == career_id]
     if career.empty:
         return None
-    return career.iloc[0].to_dict()
+    return _json_safe_record(career.iloc[0].to_dict())
 
 
 def get_all_careers():
     """Return every career as records."""
     if career_df is None:
         return []
-    return career_df.to_dict('records')
+    return _json_safe_records(career_df.to_dict('records'))
 
 
 def get_featured_careers():
@@ -105,21 +127,25 @@ def get_featured_careers():
     featured = career_df[career_df['entry_salary_avg'].notna()].sort_values(
         'entry_salary_avg', ascending=False
     ).head(6)
-    return featured.to_dict('records')
+    return _json_safe_records(featured.to_dict('records'))
 
 
 def get_careers_by_category(category):
     """Return all careers in a category."""
     if career_df is None:
         return []
-    return career_df[career_df['Category'] == category].to_dict('records')
+    return _json_safe_records(
+        career_df[career_df['Category'] == category].to_dict('records')
+    )
 
 
 def get_compare_options():
     """Return the short career list used by the comparison page."""
     if career_df is None:
         return []
-    return career_df[['Career_ID', 'Career_Name', 'Category']].to_dict('records')
+    return _json_safe_records(
+        career_df[['Career_ID', 'Career_Name', 'Category']].to_dict('records')
+    )
 
 
 def compare_careers(career_ids):
@@ -130,7 +156,7 @@ def compare_careers(career_ids):
     for cid in career_ids:
         career = career_df[career_df['Career_ID'] == cid]
         if not career.empty:
-            careers.append(career.iloc[0].to_dict())
+            careers.append(_json_safe_record(career.iloc[0].to_dict()))
     return careers
 
 
@@ -144,7 +170,7 @@ def search_careers(query):
         career_df['Category'].str.lower().str.contains(query_lower, na=False) |
         career_df['Key_Technical_Skills'].str.lower().str.contains(query_lower, na=False)
     )
-    return career_df[mask].head(10).to_dict('records')
+    return _json_safe_records(career_df[mask].head(10).to_dict('records'))
 
 
 def get_recommendations(preferences, top_n=12):
@@ -174,7 +200,7 @@ def get_recommendations(preferences, top_n=12):
     user_profile = ' '.join(user_text)
 
     if not user_profile.strip():
-        recommendations = career_df.head(top_n).to_dict('records')
+        recommendations = _json_safe_records(career_df.head(top_n).to_dict('records'))
         for rec in recommendations:
             rec['match_score'] = 50.0
         return recommendations
@@ -187,14 +213,14 @@ def get_recommendations(preferences, top_n=12):
 
         recommendations = []
         for idx in top_indices:
-            career = career_df.iloc[idx].to_dict()
+            career = _json_safe_record(career_df.iloc[idx].to_dict())
             career['match_score'] = round(similarities[idx] * 100, 1)
             recommendations.append(career)
 
         return recommendations
     except Exception as e:
         print(f"Error in get_recommendations: {e}")
-        return career_df.head(top_n).to_dict('records')
+        return _json_safe_records(career_df.head(top_n).to_dict('records'))
 
 
 def get_similar_careers(career_id, top_n=4):
@@ -216,7 +242,7 @@ def get_similar_careers(career_id, top_n=4):
 
     similar = []
     for i in top_indices:
-        career = career_df.iloc[i].to_dict()
+        career = _json_safe_record(career_df.iloc[i].to_dict())
         career['match_score'] = round(similarities[i] * 100, 1)
         similar.append(career)
 

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}My Journey - CareerGuide AI{% endblock %}
+
+{% block content %}
+<section class="results-section">
+    <div class="container">
+        <div class="results-header">
+            <h1>My Journey</h1>
+            <p>Your recommendations, chosen career and roadmap in one place.</p>
+        </div>
+
+        <div class="results-filters">
+            <a href="#recommendations" class="filter-btn active">Recommendations</a>
+            <a href="#roadmap" class="filter-btn">Roadmap</a>
+        </div>
+
+        <div id="recommendations" class="info-card">
+            <h3><i data-feather="target"></i> Recommendations</h3>
+
+            {% if chosen %}
+            <p><strong>Selected career:</strong> {{ chosen.Career_Name }} ({{ chosen.Category }})</p>
+            {% endif %}
+
+            {% if needs_assessment %}
+                <p>Complete guided discovery to see careers matched to your answers and profile.</p>
+                <a href="{{ url_for('main.discovery') }}" class="btn btn-small btn-primary">Help Me Discover</a>
+            {% elif recommendations %}
+                {% for rec in recommendations[:3] %}
+                <div class="career-card recommendation-card">
+                    <div class="career-header">
+                        <h3>#{{ rec.rank }} {{ rec.Career_Name }}</h3>
+                        <span class="match-badge">Explore #{{ rec.rank }}</span>
+                    </div>
+                    <p class="career-category">{{ rec.Category }}</p>
+                    <p>{{ rec.why_fits }}</p>
+                    <form method="POST" action="{{ url_for('main.choose_recommendation') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="career_id" value="{{ rec.career_id }}">
+                        <button type="submit" class="btn btn-small btn-primary">Choose this career</button>
+                    </form>
+                    <a href="{{ url_for('main.career_detail', career_id=rec.career_id) }}" class="btn btn-small btn-outline">View details</a>
+                </div>
+                {% endfor %}
+
+                {% if recommendations|length > 3 %}
+                <p><a href="{{ url_for('main.recommendations') }}">View all recommendations →</a></p>
+                {% endif %}
+            {% else %}
+                <p>No recommendations yet. Start with one of the discovery paths on your dashboard.</p>
+            {% endif %}
+        </div>
+
+        <div id="roadmap" class="info-card">
+            <h3><i data-feather="trending-up"></i> Roadmap</h3>
+
+            {% if roadmap_data.needs_career %}
+                <p>Choose a career to unlock your personalized roadmap.</p>
+                <a href="{{ url_for('main.discover') }}" class="btn btn-small btn-primary">Explore Careers</a>
+            {% else %}
+                <p><strong>Selected career:</strong> {{ roadmap_data.career.Career_Name }} ({{ roadmap_data.career.Category }})</p>
+                <p><a href="{{ url_for('main.discover') }}" class="btn btn-small btn-outline">Change career</a></p>
+
+                <div class="quiz-progress">
+                    <div class="progress-bar" style="width: {{ roadmap_data.progress }}%"></div>
+                </div>
+                <p>{{ roadmap_data.done_count }} of {{ roadmap_data['items']|length }} steps complete ({{ roadmap_data.progress }}%)</p>
+                {% if roadmap_data.next_milestone %}
+                <p><strong>Next milestone:</strong> {{ roadmap_data.next_milestone.title }}</p>
+                {% else %}
+                <p><strong>All steps complete.</strong></p>
+                {% endif %}
+
+                {% for item in roadmap_data['items'] %}
+                <div class="info-card">
+                    <h3>{{ loop.index }}. {{ item.title }}</h3>
+                    <p>
+                        <span class="career-badge">{{ item.phase }}</span>
+                        <span class="career-badge">{{ item.type|title }}</span>
+                    </p>
+                    <p>{{ item.detail }}</p>
+                    {% if item.est_weeks %}<p><strong>Estimated time:</strong> {{ item.est_weeks }} weeks</p>{% endif %}
+                    {% if item.done %}<p><strong>Completed</strong></p>{% endif %}
+
+                    <form method="POST" action="{{ url_for('main.roadmap') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <button type="submit" class="btn btn-small {% if item.done %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                            {{ 'Mark as not done' if item.done else 'Mark as done' }}
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+
+                <p><a href="{{ url_for('main.chatbot') }}">Ask the AI Career Mentor →</a></p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

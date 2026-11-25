@@ -550,11 +550,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Premium Chatbot Styles - FULL VISIBLE */
 .chatbot-page {
-    position: fixed;
-    top: 70px; /* Account for header */
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    height: calc(100vh - 110px);
+    min-height: 560px;
     background: var(--bg, #F9F7F5);
     overflow: hidden;
 }
@@ -900,6 +902,9 @@ document.addEventListener('DOMContentLoaded', () => {
     max-width: 800px;
     margin: 0 auto;
     width: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 0;
 }
 
 .message {
@@ -1118,7 +1123,8 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Responsive */
 @media (max-width: 768px) {
     .chatbot-page {
-        top: 60px;
+        height: calc(100vh - 72px);
+        min-height: 520px;
     }
     
     .chatbot-sidebar {

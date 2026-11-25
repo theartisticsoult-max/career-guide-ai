@@ -297,6 +297,21 @@ def dashboard():
     return render_template('dashboard.html', **user_service.get_dashboard_data(session['user_id']))
 
 
+@main_bp.route('/journey')
+@login_required
+def journey():
+    """One place for recommendations, the chosen career and the roadmap."""
+    user_id = session['user_id']
+    recommendations = recommendation_service.get_recommendations(user_id)
+    return render_template(
+        'journey.html',
+        recommendations=recommendations['items'],
+        needs_assessment=recommendations['needs_assessment'],
+        chosen=recommendations['chosen'],
+        roadmap_data=roadmap_service.get_roadmap(user_id),
+    )
+
+
 @main_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():

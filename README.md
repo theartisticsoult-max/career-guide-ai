@@ -136,7 +136,7 @@ See `.env.example` for a copyable template.
 | `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Optional admin bootstrap; all three are required and no admin is created unless none exists | Empty |
 | `FLASK_DEBUG` | Set to `1` for local debug only | `0` |
 | `GROQ_API_KEY` | Groq API key for AI explanations, roadmaps and chat | Optional (fallback used) |
-| `GROQ_MODEL` | Groq model identifier | `llama-3.3-70b-versatile` |
+| `GROQ_MODEL` | Groq model identifier | `openai/gpt-oss-120b` |
 
 No default admin account is created. Set all three `ADMIN_*` values if you need
 one; otherwise create it through your own seed process.
@@ -158,7 +158,7 @@ one; otherwise create it through your own seed process.
    - `SECRET_KEY` (auto-generated or a long random string)
    - `DATABASE_URL` (the Internal Database URL from step 2)
    - `GROQ_API_KEY` (optional; AI features fall back gracefully without it)
-   - `GROQ_MODEL` (optional, defaults to `llama-3.3-70b-versatile`)
+   - `GROQ_MODEL` (optional, defaults to `openai/gpt-oss-120b`)
    - `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (optional bootstrap)
 6. Deploy. The pre-deploy command applies migrations before Gunicorn starts.
 7. To import the existing SQLite database, set `LEGACY_DATABASE_PATH` to a path
